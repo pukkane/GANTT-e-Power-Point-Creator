@@ -1,6 +1,6 @@
-# mYcOMOANY Timeline
+# MyCompany Timeline
 
-mYcOMOANY Timeline is a **web-based Gantt and presentation generator** designed to create **structured, professional PowerPoint decks** starting from an interactive project timeline.
+MyCompany Timeline is a **web-based Gantt and presentation generator** designed to create **structured, professional PowerPoint decks** starting from an interactive project timeline.
 
 It is a **single-page HTML/JavaScript application**, runs entirely in the browser, requires **no backend**, and produces **high-quality PPTX files** suitable for executive, technical, and project governance presentations.
 
@@ -66,7 +66,7 @@ The PPTX includes the following sections (all editable in the UI):
 - Project purpose
 - Context and objectives
 - Scope
-- Stakeholders (mYcOMOANY / Client)
+- Stakeholders (MyCompany / Client)
 - Governance
 - Deliverables
 - Prerequisites
@@ -207,5 +207,6 @@ Please open an issue or submit a pull request.
 ## Author
 
 Developed as a practical, presentation-oriented timeline tool focused on **clarity, executive readability, and real-world project usage**.
+
 
 
