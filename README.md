@@ -18,6 +18,9 @@ It is a **single-page HTML/JavaScript application**, runs entirely in the browse
   - Vertical reference markers
 - Multiple timelines in the same project, each with an optional **suffix** (e.g. *Pilot*, *Wave 1*, *Release A*)
 - Automatic ordering and rendering consistency between UI and PPTX export
+- added risk matrix and specific risks
+- added small sector for D.Lgs. 81-2008
+
 
 ---
 
@@ -207,6 +210,7 @@ Please open an issue or submit a pull request.
 ## Author
 
 Developed as a practical, presentation-oriented timeline tool focused on **clarity, executive readability, and real-world project usage**.
+
 
 
 
