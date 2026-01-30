@@ -1,0 +1,4576 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>GANTT Creator</title>
+
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+
+<style>
+  .btnRow{display:flex;gap:12px;align-items:center;justify-content:flex-end;flex-wrap:nowrap;}
+  .btnRow .btn{ white-space:nowrap; }
+
+.btn.ghost{
+  background: transparent;
+  color:#1c2a7a;
+  border:1px dashed #cfd7ff;
+  box-shadow:none;
+}
+.btn.ghost:hover{ background: rgba(238,242,255,.65); }
+
+
+.btn.danger{
+  background: linear-gradient(180deg,#fee2e2,#fecaca);
+  color:#7f1d1d;
+  border:1px solid #fecaca;
+  box-shadow:none;
+}
+
+
+  :root{
+    --bg:#f6f8ff; --panel:#fff; --ink:#0f172a; --muted:#5a6283;
+    --grid:#e2e7ff; --grid-strong:#cbd5ff;
+    --axisband:#eef2ff; --axisband2:#e9edff; --weekend:#f7f9ff;
+    --marker:#1d4ed8; --pill:#e7eefc; --pill-b:#c7d4fb;
+    --ms:#f59e0b; --ms-b:#8b5b00; --ok:#10b981;
+
+    --shadow: 0 10px 30px rgba(15, 23, 42, .08);
+    --shadow-sm: 0 2px 10px rgba(15, 23, 42, .06);
+    --ring: 0 0 0 4px rgba(44, 68, 221, .14);
+
+    --s1: 8px;
+    --s2: 16px;
+    --s3: 24px;
+    --s4: 32px;
+  }
+
+  html,body{
+    margin:0;
+    background:
+      radial-gradient(1200px 600px at 20% -10%, #e9eeff 0%, rgba(233,238,255,0) 60%),
+      radial-gradient(900px 520px at 90% 0%, #eef7ff 0%, rgba(238,247,255,0) 55%),
+      var(--bg);
+    color:var(--ink);
+    font:14px/1.45 Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif
+  }
+
+  body{user-select:none}
+  .wrap{max-width:1400px;margin:var(--s3) auto;padding:0 var(--s2)}
+
+  .panel{
+    background:var(--panel);
+    border:1px solid rgba(203,213,255,.55);
+    border-radius:18px;
+    padding:var(--s3);
+    margin-bottom:var(--s2);
+    box-shadow:var(--shadow-sm);
+    position:relative;
+    z-index:auto;
+    overflow: visible;
+  }
+
+  #chartWrap{
+    position:relative;
+    z-index:0;
+    overflow-x:auto;
+    overflow-y:visible;
+    background:#fff;
+    border:1px solid #e2e8ff;
+    border-radius:18px;
+    box-shadow:var(--shadow);
+  }
+  #chart{position:relative;z-index:auto}
+
+  h1{margin:0 0 var(--s2);font-size:22px;letter-spacing:-.02em}
+  h2{margin:0 0 var(--s2);font-size:16px;letter-spacing:-.01em}
+  .muted{color:var(--muted)}
+
+  .row{
+    display:grid;
+    grid-template-columns:repeat(12,1fr);
+    gap:var(--s1);
+    align-items:end
+  }
+  .row+.row{margin-top:var(--s1)}
+
+  label{font-size:.92rem;color:var(--muted)}
+  input,select,button,textarea{font:inherit}
+
+  input[type="text"],input[type="date"],input[type="number"],select,textarea{
+    width:100%;
+    background:#fff;
+    border:1px solid rgba(213,220,255,.95);
+    border-radius:12px;
+    padding:10px 12px;
+    color:var(--ink);
+    outline:none;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+    transition: box-shadow .15s ease, border-color .15s ease, transform .08s ease;
+  }
+  textarea{min-height:96px; resize:vertical; line-height:1.35}
+  input:focus, select:focus, textarea:focus{
+    border-color: rgba(44,68,221,.55);
+    box-shadow: var(--ring), inset 0 1px 0 rgba(255,255,255,.7);
+  }
+
+  .btn{
+    background:linear-gradient(180deg,#4c64ff,#2c44dd);
+    color:#fff;border:none;
+    padding:10px 14px;border-radius:12px;
+    cursor:pointer;
+    box-shadow: 0 10px 18px rgba(44,68,221,.18);
+    transition: transform .08s ease, filter .15s ease, box-shadow .15s ease;
+  }
+  .btn:hover{filter: brightness(1.03)}
+  .btn:active{transform: translateY(1px); box-shadow: 0 7px 14px rgba(44,68,221,.16)}
+  .btn.alt{
+    background: linear-gradient(180deg, #f6f8ff, #eef2ff);
+    color:#1c2a7a;border:1px solid #cfd7ff;
+    box-shadow:none;
+  }
+  .btn.alt:hover{filter: brightness(0.99)}
+  .btn.s{padding:8px 10px;border-radius:10px}
+
+  .table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    margin-top:var(--s2);
+    border:1px solid rgba(229,233,255,.75);
+    border-radius:14px;
+    overflow:hidden;
+  }
+  .table th,.table td{
+    padding:10px 12px;
+    text-align:left;
+    vertical-align:middle;
+    border-bottom:1px solid rgba(238,241,255,.85);
+  }
+  .table thead th{
+    background: linear-gradient(180deg,#ffffff,#f7f9ff);
+    color:#223065;
+    font-weight:650;
+    position: sticky; top: 0;
+    z-index: 1;
+  }
+  .table tbody tr:last-child td{border-bottom:none}
+  .table tbody tr:nth-child(even){background: rgba(246,248,255,.55)}
+  .table tbody tr:hover{background: rgba(238,242,255,.65)}
+
+  .tbl-actions{display:flex;gap:6px}
+  .w-110{width:110px}
+  .w-130{width:130px}
+  .w-60{width:60px}
+
+  .chip{
+    display:inline-block;
+    padding:3px 10px;
+    border-radius:999px;
+    background: linear-gradient(180deg,#f7f9ff,#eef2ff);
+    border:1px solid rgba(207,215,255,.9);
+    color:#1c2a7a;
+  }
+
+  [data-drag]{cursor:grab}
+  [data-drag].dragging{cursor:grabbing;opacity:.9;filter:saturate(1.1)}
+  [data-resize]{cursor:ew-resize;opacity:.85}
+  [data-resize]:hover{opacity:1}
+
+  .mini{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    margin-top:8px;
+    padding:10px;
+    border:1px solid rgba(229,233,255,.75);
+    border-radius:14px;
+    background: linear-gradient(180deg,#ffffff,#f7f9ff);
+  }
+  .mini img{
+    width:72px;height:42px;object-fit:cover;border-radius:10px;border:1px solid rgba(207,215,255,.9);
+    background:#fff;
+  }
+  .mini .meta{flex:1;min-width:0}
+  .mini .meta .t{font-weight:650;color:#223065}
+  .mini .meta .s{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mini .right{display:flex;gap:8px;align-items:center}
+
+  .panel.focusRaise { z-index: 9999; }
+  #chartWrap { overflow: visible; }
+  #chartWrap, #chart { position: relative; z-index: 1; }
+
+  /* Risk management level pill */
+.pill{
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:4px 10px; border-radius:999px;
+  font-weight:700; font-size:12px;
+  border:1px solid rgba(0,0,0,.08);
+  background:#eef2ff; color:#111827;
+}
+.pill.low{background:#eef2ff;}
+.pill.medium{background:#e0f2fe;}
+.pill.high{background:#fef9c3;}
+.pill.critical{background:#fecaca;}
+
+.versionBadge{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin-left:10px;
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.02em;
+  background: linear-gradient(180deg,#4c64ff,#2c44dd);
+  color:#fff;
+  box-shadow: 0 10px 18px rgba(44,68,221,.18);
+  border:1px solid rgba(255,255,255,.35);
+}
+.versionBadge .dot{
+  width:8px;height:8px;border-radius:999px;background:#10b981;
+  box-shadow:0 0 0 3px rgba(16,185,129,.18);
+}
+
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <div class="panel">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div>
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+  <h1 style="margin:0">Gantt Creator</h1>
+  <span id="versionBadge" class="versionBadge">
+    <span class="dot"></span>
+    NG
+  </span>
+</div>
+<div class="muted" id="appVersion" style="font-size:12px;margin-top:6px"></div>
+
+      </div>
+      <div class="muted" style="font-size:12px;max-width:760px">
+        Progetti: solo file “Salva/Ripristina”. Nessun storage “magico” del browser per i JSON del progetto (meno corruzione, meno sorprese).
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:var(--s2)">
+      <div style="grid-column:span 4">
+        <label>Titolo</label><input id="title" type="text" placeholder="Setup EDR + SIEM — Piano pilota"/>
+      </div>
+
+      <div style="grid-column:span 2">
+        <label>Data Kickoff</label><input id="kickoffDate" type="date"/>
+      </div>
+
+      <div style="grid-column:span 2">
+        <label>Inizio (opt)</label><input id="startBound" type="date"/>
+      </div>
+      <div style="grid-column:span 2">
+        <label>Fine (opt)</label><input id="endBound" type="date"/>
+      </div>
+
+      <div style="grid-column:span 2">
+        <label>Altezza riga <span id="rowHVal">36</span>px</label>
+        <input id="rowH" type="range" min="28" max="70" step="2" value="36"/>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:var(--s2)">
+      <div style="grid-column:span 7;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <label><input id="shadeWeekend" type="checkbox" checked/> weekend</label>
+        <label><input id="showToday" type="checkbox" checked/> oggi</label>
+        <label><input id="phaseBg" type="checkbox" checked/> sfondo chiaro fase (dietro)</label>
+        <label>progresso
+          <select id="progressStyle">
+            <option value="tick" selected>tacca</option>
+            <option value="dual">due colori</option>
+          </select>
+        </label>
+        <label>etichetta (globale)
+          <select id="labelSide">
+            <option value="inside">dentro</option>
+            <option value="left">sinistra</option>
+            <option value="right" selected>destra</option>
+            <option value="auto">auto</option>
+          </select>
+        </label>
+        <label><input id="msInPhase" type="checkbox" checked/> milestone nella fase</label>
+      </div>
+
+      <div style="grid-column:span 5;text-align:right;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+        <button id="saveAllBtn" class="btn">SALVA</button>
+        <input id="restoreFile" type="file" accept="application/json" style="display:none"/>
+        <button id="restoreBtn" class="btn alt">RIPRISTINA</button>
+
+        <button id="renderBtn" class="btn">Render</button>
+        <button id="exportPptxBtn" class="btn">PowerPoint</button>
+        <button id="clearBtn"  class="btn alt">Pulisci tutto</button>
+        <button id="resetBtn"  class="btn alt">Reset demo</button>
+        <button id="exportSvgBtn" class="btn alt">SVG</button>
+        <button id="exportPngBtn" class="btn alt">PNG</button>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:var(--s2)">
+      <div style="grid-column:span 3">
+        <label>Sfondo copertina (JPG/PNG)</label>
+        <input id="bgCoverPick" type="file" accept="image/*">
+        <div id="bgCoverBox" class="mini" style="display:none">
+          <img id="bgCoverPrev" alt="preview cover"/>
+          <div class="meta">
+            <div class="t">Copertina</div>
+            <div class="s" id="bgCoverState"></div>
+          </div>
+          <div class="right">
+            <span class="chip">salvato</span>
+            <button id="bgCoverClear" class="btn alt s">Rimuovi</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="grid-column:span 3">
+        <label>Sfondo Agenda (JPG/PNG)</label>
+        <input id="bgAgendaPick" type="file" accept="image/*">
+        <div id="bgAgendaBox" class="mini" style="display:none">
+          <img id="bgAgendaPrev" alt="preview agenda"/>
+          <div class="meta">
+            <div class="t">Agenda</div>
+            <div class="s" id="bgAgendaState"></div>
+          </div>
+          <div class="right">
+            <span class="chip">salvato</span>
+            <button id="bgAgendaClear" class="btn alt s">Rimuovi</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="grid-column:span 3">
+        <label>Sfondo slide interne (JPG/PNG)</label>
+        <input id="bgMiddlePick" type="file" accept="image/*">
+        <div id="bgMiddleBox" class="mini" style="display:none">
+          <img id="bgMiddlePrev" alt="preview middle"/>
+          <div class="meta">
+            <div class="t">Interne</div>
+            <div class="s" id="bgMiddleState"></div>
+          </div>
+          <div class="right">
+            <span class="chip">salvato</span>
+            <button id="bgMiddleClear" class="btn alt s">Rimuovi</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="grid-column:span 3">
+        <label>Sfondo chiusura (JPG/PNG)</label>
+        <input id="bgEndPick" type="file" accept="image/*">
+        <div id="bgEndBox" class="mini" style="display:none">
+          <img id="bgEndPrev" alt="preview end"/>
+          <div class="meta">
+            <div class="t">Chiusura</div>
+            <div class="s" id="bgEndState"></div>
+          </div>
+          <div class="right">
+            <span class="chip">salvato</span>
+            <button id="bgEndClear" class="btn alt s">Rimuovi</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="panel">
+    <h2>Agenda</h2>
+    <div class="row">
+      <div style="grid-column:span 12">
+        <label>Bullet point (uno per riga)</label>
+        <textarea id="agenda" placeholder="Una riga = un bullet"></textarea>
+      </div>
+    </div>
+    <div class="muted" style="margin-top:var(--s1)">La slide Agenda viene messa subito dopo la copertina.</div>
+  </div>
+
+  <div class="panel">
+    <h2>Scopo del progetto</h2>
+    <div class="row">
+      <div style="grid-column:span 12">
+        <label>Descrizione scopo (testo libero)</label>
+        <textarea id="purpose"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Contesto e obiettivi</h2>
+    <div class="row">
+      <div style="grid-column:span 12">
+        <label>Bullet point (uno per riga)</label>
+        <textarea id="context" placeholder="Una riga = un bullet"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Scope</h2>
+    <div class="row">
+      <div style="grid-column:span 12">
+        <label>Bullet point (uno per riga)</label>
+        <textarea id="scope" placeholder="Una riga = un bullet"></textarea>
+      </div>
+    </div>
+  </div>
+
+
+<div class="panel">
+  <h2>Stakeholder</h2>
+
+  <div class="row">
+    <div style="grid-column:span 6">
+      <label>Team MyCompany</label>
+      <textarea id="stakeAcs"></textarea>
+    </div>
+
+    <div style="grid-column:span 6">
+      <label>Team Cliente (uno per riga)</label>
+      <textarea id="stakeClient"></textarea>
+    </div>
+
+    <div style="grid-column:span 12">
+      <label>Ruoli e governance (uno per riga)</label>
+      <textarea id="governance" placeholder="Una riga = un bullet"></textarea>
+    </div>
+
+    <div style="grid-column:span 12">
+      <label>Note IMPORTANTI D.Lgs. 81/2008 (verranno mostrate in slide Stakeholder a destra)</label>
+      <textarea id="dlgsNotes" placeholder="Inserisci qui le note (una riga = un bullet)"></textarea>
+    </div>
+  </div>
+</div>
+
+
+  </div>
+</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Licenze Necessarie</h2>
+    <div class="row">
+      <div style="grid-column:span 4">
+        <label>Titolo slide (personalizzabile)</label>
+       <input id="licTitle" type="text" placeholder="BOM Licenze"/>
+      </div>
+      <div style="grid-column:span 8">
+        <label>Bullet point (uno per riga)</label>
+        <textarea id="licText"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Materiale Necessario</h2>
+    <div class="row">
+      <div style="grid-column:span 4">
+        <label>Titolo slide (personalizzabile)</label>
+        <input id="matTitle" type="text" placeholder="BOM Materiali"/>
+      </div>
+      <div style="grid-column:span 8">
+        <label>Bullet point (uno per riga)</label>
+        <textarea id="matText"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Prerequisiti</h2>
+    <div class="row">
+      <div style="grid-column:span 12">
+        <label>Prerequisiti (uno per riga, verranno numerati 1..N)</label>
+        <textarea id="prereq"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Piano di comunicazione</h2>
+    <div class="row">
+      <div style="grid-column:span 12">
+        <label>Bullet point (uno per riga)</label>
+        <textarea id="comms"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Collaboration</h2>
+    <div class="row">
+      <div style="grid-column:span 12">
+        <label>File / link / cartelle (uno per riga)</label>
+        <textarea id="collab"></textarea>
+      </div>
+    </div>
+  </div>
+
+<div class="panel">
+  <h2>Deliverable</h2>
+  <div class="row">
+    <div style="grid-column:span 12">
+      <label>Bullet point (uno per riga)</label>
+      <textarea id="deliverables" placeholder="Una riga = un bullet"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Rischi e dipendenze</h2>
+  <div class="row">
+    <div style="grid-column:span 12">
+      <label>Bullet point (uno per riga)</label>
+      <textarea id="risks" placeholder="Una riga = un bullet"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Risk management</h2>
+  <div class="hint">Aggiungi rischi strutturati per generare una matrice Probabilità × Severità e una slide dedicata in PowerPoint.</div>
+
+  <div class="row">
+    <div style="grid-column:span 5">
+      <label>Risk</label>
+      <input id="riskDesc" type="text" placeholder="Descrizione rischio (breve e chiara)"/>
+    </div>
+    <div style="grid-column:span 2">
+      <label>Owner</label>
+      <input id="riskOwner" type="text" placeholder="Nome"/>
+    </div>
+    <div style="grid-column:span 2">
+      <label>Probability</label>
+      <select id="riskProb">
+        <option value="1">1 – Low</option>
+        <option value="2">2 – Medium</option>
+        <option value="3" selected>3 – High</option>
+        <option value="4">4 – Very High</option>
+        <option value="5">5 – Extreme</option>
+      </select>
+    </div>
+    <div style="grid-column:span 2">
+      <label>Severity</label>
+      <select id="riskSev">
+        <option value="1">1 – Low</option>
+        <option value="2">2 – Medium</option>
+        <option value="3" selected>3 – High</option>
+        <option value="4">4 – Very High</option>
+        <option value="5">5 – Extreme</option>
+      </select>
+    </div>
+    <div style="grid-column:span 12">
+      <label>Mitigation / Action</label>
+      <textarea id="riskMit" rows="2" placeholder="Azioni di mitigazione (sintetiche)"></textarea>
+    </div>
+  </div>
+
+  <div class="btnRow" style="justify-content:flex-start; margin-top:10px;">
+    <button class="btn" id="addRiskBtn">Aggiungi rischio</button>
+    <button class="btn ghost" id="clearRisksBtn" title="Svuota lista rischi">Svuota</button>
+  </div>
+
+  <div style="margin-top:10px; overflow:auto;">
+    <table class="table" id="risksTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Risk</th>
+          <th>Owner</th>
+          <th>Probability</th>
+          <th>Severity</th>
+          <th>Level</th>
+          <th>Mitigation</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+
+<div class="panel">
+  <h2>Out of scope</h2>
+  <div class="row">
+    <div style="grid-column:span 12">
+      <label>Bullet point (uno per riga)</label>
+      <textarea id="outScope" placeholder="Una riga = un bullet"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Prossimi passi e Q&amp;A</h2>
+  <div class="row">
+    <div style="grid-column:span 12">
+      <label>Bullet point (uno per riga)</label>
+      <textarea id="nextSteps" placeholder="Una riga = un bullet"></textarea>
+    </div>
+  </div>
+</div>
+
+
+  <div class="panel">
+    <h2>SAL</h2>
+
+    <div class="row">
+      <div style="grid-column:span 4">
+        <label>Data SAL (testo libero)</label>
+        <input id="salDate" type="text" placeholder="es. 31/10/2025"/>
+      </div>
+      <div style="grid-column:span 8; display:flex; justify-content:flex-end; gap:8px; align-items:end">
+        <button id="saveSalBtn" class="btn alt">Salva SAL</button>
+        <button id="addSalBtn" class="btn">Aggiungi SAL</button>
+        <button id="delSalBtn" class="btn alt">Elimina SAL selezionato</button>
+      </div>
+    </div>
+
+    <table class="table" id="salTable" style="margin-top:12px">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Data</th>
+          <th>Creato</th>
+          <th>Selezionato</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div class="row" style="margin-top:var(--s2)">
+      <div style="grid-column:span 6">
+        <label>Issues (uno per riga)</label>
+        <textarea id="salIssues" placeholder="Una riga = un bullet"></textarea>
+      </div>
+      <div style="grid-column:span 6">
+        <label>Note aggiuntive (uno per riga)</label>
+        <textarea id="salNotes" placeholder="Una riga = un bullet"></textarea>
+      </div>
+    </div>
+
+    <div class="muted" style="margin-top:var(--s1)">
+      Ogni SAL genera 3 slide in export: Avanzamento, Issue, Note aggiuntive (tutte con “SAL” + data nel titolo).
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Fasi</h2>
+    <div class="row">
+      <div style="grid-column:span 6"><label>Nome fase</label><input id="phaseName" type="text" placeholder="FASE 1 — KICKOFF"/></div>
+      <div style="grid-column:span 3">
+        <label>Colore</label><select id="phaseColor"></select>
+      </div>
+      <div style="grid-column:span 3;display:flex;gap:8px;align-items:end">
+        <button id="addPhase" class="btn s">Aggiungi</button>
+        <button id="phaseUp" class="btn alt s">▲ su</button>
+        <button id="phaseDown" class="btn alt s">▼ giù</button>
+      </div>
+    </div>
+    <table class="table" id="phTable">
+      <thead><tr><th>#</th><th>Fase</th><th>Colore</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <h2>Task</h2>
+    <div class="row">
+      <div style="grid-column:span 4"><label>Titolo</label><input id="taskName" type="text" placeholder="Installazione agent"/></div>
+      <div style="grid-column:span 2">
+  <label>Owner</label>
+  <input id="taskOwner" type="text" placeholder="Nome"/>
+</div>
+      <div style="grid-column:span 2"><label>Inizio</label><input id="taskStart" type="date"/></div>
+      <div style="grid-column:span 2"><label>Fine</label><input id="taskEnd" type="date"/></div>
+<div style="grid-column:span 1">
+  <label>%</label>
+  <input id="taskProg" type="number" min="0" max="100" step="1" placeholder="0–100"/>
+</div>
+<div style="grid-column:span 1">
+  <label>Fase</label>
+  <select id="taskPhase"></select>
+</div>
+    </div>
+    <div class="row" style="margin-top:var(--s1)">
+      <div style="grid-column:span 12;text-align:right"><button id="addTask" class="btn s">Aggiungi task</button></div>
+    </div>
+<table class="table" id="tasksTable">
+  <thead>
+  <tr>
+    <th>#</th>
+    <th>Activity</th>
+    <th>Assigned To</th>
+    <th>Start</th>
+    <th>End</th>
+    <th>Days</th>
+    <th>Status</th>
+    <th>% Done</th>
+    <th></th>
+  </tr>
+</thead>
+  <tbody></tbody>
+</table>
+  </div>
+
+  <div class="panel">
+    <h2>Milestone & Linee</h2>
+    <div class="row">
+      <div style="grid-column:span 4"><label>Milestone</label><input id="msName" type="text" placeholder="Go Live"/></div>
+      <div style="grid-column:span 3"><label>Data</label><input id="msDate" type="date"/></div>
+      <div style="grid-column:span 3"><label>Fase</label><select id="msPhase"></select></div>
+      <div style="grid-column:span 2"><button id="addMs" class="btn s">Aggiungi</button></div>
+    </div>
+    <table class="table" id="msTable"><thead><tr><th>Titolo</th><th>Data</th><th>Fase</th><th></th></tr></thead><tbody></tbody></table>
+
+    <div class="row" style="margin-top:var(--s1)">
+      <div style="grid-column:span 5"><label>Linea verticale</label><input id="mkLabel" type="text" placeholder="31/10 SAL"/></div>
+      <div style="grid-column:span 3"><label>Data</label><input id="mkDate" type="date"/></div>
+      <div style="grid-column:span 2"><button id="addMk" class="btn s">Aggiungi</button></div>
+    </div>
+    <table class="table" id="mkTable"><thead><tr><th>Etichetta</th><th>Data</th><th></th></tr></thead><tbody></tbody></table>
+  </div>
+
+  <div class="row" style="margin-top:var(--s2)">
+    <div style="grid-column:span 4">
+      <label>Timeline</label>
+      <select id="tlSelect"></select>
+    </div>
+
+    <div style="grid-column:span 4">
+      <label>Titolo timeline (suffix)</label>
+      <input id="tlSuffix" type="text" placeholder="es. Stream SOC / Wave 2 / Country rollout"/>
+    </div>
+
+    <div style="grid-column:span 4; display:flex; gap:8px; align-items:end; justify-content:flex-end">
+      <button id="tlAddBtn" class="btn alt">+ Timeline</button>
+      <button id="tlDupBtn" class="btn alt">Duplica</button>
+      <button id="tlDelBtn" class="btn alt">Elimina</button>
+    </div>
+  </div>
+
+  <div class="muted" style="margin-top:6px">
+    Ogni timeline genera una slide Gantt e i delta SAL vengono calcolati per timeline.
+  </div>
+
+  <div class="panel">
+    <div style="display:flex;gap:8px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap">
+      <div>
+        <div id="outTitle" style="font-weight:800;font-size:20px;margin-bottom:6px">Titolo del Gantt</div>
+        <div id="outOwner" class="muted">Nome Cognome — Ruolo</div>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input id="csvFile" type="file" accept=".csv" style="display:none"/>
+        <button id="downloadTpl" class="btn alt s">Template CSV</button>
+        <button id="uploadCsv" class="btn alt s">Importa CSV</button>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:var(--s1)">
+      <div style="grid-column:span 6">
+        <label>Nome Cognome — Ruolo</label>
+        <input id="ownerRole" type="text" placeholder="Mario Rossi — PM"/>
+      </div>
+      <div style="grid-column:span 6">
+        <label>Nome Cliente (parametrico)</label>
+        <input id="clientName" type="text" placeholder="Cliente S.p.A."/>
+      </div>
+    </div>
+
+    <div id="chartWrap"><svg id="chart" xmlns="http://www.w3.org/2000/svg" width="1400" height="760"></svg></div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const $=s=>document.querySelector(s);
+
+  const APP_VERSION = "v 12.3";
+  $("#appVersion").textContent = "Versione " + APP_VERSION;
+  const vb = $("#versionBadge");
+if(vb) vb.title = "Build " + APP_VERSION;
+
+
+  /* ========== Backgrounds persistenti (solo immagini) ========== */
+  const LS_BG_COVER  = "acs_bg_cover_v2";
+  const LS_BG_AGENDA = "acs_bg_agenda_v2";
+  const LS_BG_MIDDLE = "acs_bg_middle_v2";
+  const LS_BG_END    = "acs_bg_end_v2";
+
+  const MEM_STORE = {};
+  function lsGetRaw(key){
+    try{ return localStorage.getItem(key); }
+    catch(e){ return (key in MEM_STORE) ? MEM_STORE[key] : null; }
+  }
+  function lsSetRaw(key, value){
+    try{ localStorage.setItem(key, value); }
+    catch(e){ MEM_STORE[key] = value; }
+  }
+
+  function readLS(key){
+    try{
+      const raw = lsGetRaw(key);
+      if(!raw) return { data:"", name:"" };
+      if(typeof raw === "string" && raw.startsWith("data:")) return { data: raw, name: "" };
+      const obj = JSON.parse(raw);
+      return { data: String(obj.data || ""), name: String(obj.name || "") };
+    }catch(e){
+      return { data:"", name:"" };
+    }
+  }
+
+  function writeLS(key, payload){
+    try{
+      const s = JSON.stringify({ data: payload?.data || "", name: payload?.name || "" });
+      lsSetRaw(key, s);
+    }catch(e){
+      try{ MEM_STORE[key] = JSON.stringify({ data:"", name:"" }); }catch(_){}
+    }
+  }
+
+  function fileToDataUrl(file){
+    return new Promise((res, rej)=>{
+      const fr = new FileReader();
+      fr.onload = () => res(String(fr.result||""));
+      fr.onerror = () => rej(new Error("FileReader failed"));
+      fr.readAsDataURL(file);
+    });
+  }
+
+  async function handleBgPick(inputEl, lsKey){
+    const f = inputEl.files && inputEl.files[0];
+    if(!f) return;
+    try{
+      const dataUrl = await fileToDataUrl(f);
+      writeLS(lsKey, { data: dataUrl, name: f.name || "" });
+      refreshBgUI();
+    }catch(e){
+      console.error(e);
+      alert("Errore caricamento immagine.");
+    }finally{
+      inputEl.value = "";
+    }
+  }
+
+  function clearBg(lsKey){
+    writeLS(lsKey, { data:"", name:"" });
+    refreshBgUI();
+  }
+
+  function refreshBgUI(){
+    const c = readLS(LS_BG_COVER);
+    $("#bgCoverPick").style.display = c.data ? "none" : "";
+    $("#bgCoverBox").style.display  = c.data ? "" : "none";
+    if(c.data){
+      $("#bgCoverPrev").src = c.data;
+      $("#bgCoverState").textContent = "Persistente (localStorage)" + (c.name ? " • " + c.name : "");
+    }
+
+    const a = readLS(LS_BG_AGENDA);
+    $("#bgAgendaPick").style.display = a.data ? "none" : "";
+    $("#bgAgendaBox").style.display  = a.data ? "" : "none";
+    if(a.data){
+      $("#bgAgendaPrev").src = a.data;
+      $("#bgAgendaState").textContent = "Persistente (localStorage)" + (a.name ? " • " + a.name : "");
+    }
+
+    const m = readLS(LS_BG_MIDDLE);
+    $("#bgMiddlePick").style.display = m.data ? "none" : "";
+    $("#bgMiddleBox").style.display  = m.data ? "" : "none";
+    if(m.data){
+      $("#bgMiddlePrev").src = m.data;
+      $("#bgMiddleState").textContent = "Persistente (localStorage)" + (m.name ? " • " + m.name : "");
+    }
+
+    const e = readLS(LS_BG_END);
+    $("#bgEndPick").style.display = e.data ? "none" : "";
+    $("#bgEndBox").style.display  = e.data ? "" : "none";
+    if(e.data){
+      $("#bgEndPrev").src = e.data;
+      $("#bgEndState").textContent = "Persistente (localStorage)" + (e.name ? " • " + e.name : "");
+    }
+  }
+
+  const LS_BG_COVER_OLD1  = "acs_bg_cover";
+  const LS_BG_MIDDLE_OLD1 = "acs_bg_middle";
+  const LS_BG_END_OLD1    = "acs_bg_end";
+
+  function toB64Unicode(str){ return btoa(unescape(encodeURIComponent(str))); }
+  function svgToDataUrl(svgStr){ return "data:image/svg+xml;base64," + toB64Unicode(svgStr); }
+
+  const SEED_COVER = svgToDataUrl(`
+  <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080">
+    <defs>
+      <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#eef2ff"/>
+        <stop offset="1" stop-color="#ffffff"/>
+      </linearGradient>
+      <linearGradient id="b" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#2c44dd" stop-opacity="0.95"/>
+        <stop offset="1" stop-color="#4c64ff" stop-opacity="0.75"/>
+      </linearGradient>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#g)"/>
+    <circle cx="240" cy="140" r="240" fill="#e9eeff"/>
+    <circle cx="1720" cy="120" r="320" fill="#eef7ff"/>
+    <rect x="0" y="880" width="1920" height="200" fill="url(#b)"/>
+    <text x="70" y="955" font-family="Calibri, Arial" font-size="40" fill="#ffffff" font-weight="700">Project Kickoff</text>
+  </svg>`);
+
+  const SEED_AGENDA = svgToDataUrl(`
+  <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080">
+    <defs>
+      <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#ffffff"/>
+        <stop offset="1" stop-color="#f6f8ff"/>
+      </linearGradient>
+      <linearGradient id="b" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#2c44dd" stop-opacity="0.10"/>
+        <stop offset="1" stop-color="#4c64ff" stop-opacity="0.04"/>
+      </linearGradient>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#g)"/>
+    <rect x="0" y="0" width="1920" height="160" fill="#eef2ff"/>
+    <rect x="0" y="160" width="1920" height="2" fill="#cfd7ff"/>
+    <rect x="0" y="0" width="1920" height="1080" fill="url(#b)"/>
+    <circle cx="1700" cy="280" r="260" fill="#eef7ff"/>
+    <circle cx="240" cy="920" r="220" fill="#e9eeff"/>
+  </svg>`);
+
+  const SEED_MIDDLE = svgToDataUrl(`
+  <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080">
+    <defs>
+      <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#ffffff"/>
+        <stop offset="1" stop-color="#f6f8ff"/>
+      </linearGradient>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#g)"/>
+    <rect x="0" y="0" width="1920" height="140" fill="#eef2ff"/>
+    <rect x="0" y="140" width="1920" height="2" fill="#cfd7ff"/>
+    <circle cx="1820" cy="980" r="220" fill="#eef7ff"/>
+    <circle cx="150" cy="980" r="180" fill="#e9eeff"/>
+  </svg>`);
+
+  const SEED_END = svgToDataUrl(`
+  <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080">
+    <defs>
+      <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#ffffff"/>
+        <stop offset="1" stop-color="#eef2ff"/>
+      </linearGradient>
+      <linearGradient id="b" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#2c44dd" stop-opacity="0.95"/>
+        <stop offset="1" stop-color="#4c64ff" stop-opacity="0.75"/>
+      </linearGradient>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#g)"/>
+    <rect x="0" y="0" width="1920" height="220" fill="url(#b)"/>
+    <text x="70" y="145" font-family="Calibri, Arial" font-size="54" fill="#ffffff" font-weight="700">Grazie</text>
+    <circle cx="1760" cy="260" r="240" fill="#e9eeff" fill-opacity="0.55"/>
+  </svg>`);
+
+  function migrateBgKey(oldKey, newKey){
+    try{
+      const oldRaw = localStorage.getItem(oldKey);
+      if(!oldRaw) return false;
+      const cur = readLS(newKey);
+      if(cur && cur.data) return true;
+
+      if(oldRaw.startsWith("data:")){
+        writeLS(newKey, { data: oldRaw, name: "" });
+        return true;
+      }
+      try{
+        const obj = JSON.parse(oldRaw);
+        if(obj && obj.data){
+          writeLS(newKey, { data: String(obj.data), name: String(obj.name||"") });
+          return true;
+        }
+      }catch(e){}
+      return false;
+    }catch(e){ return false; }
+  }
+
+  const AUTO_BG_FILES = {
+    cover:"bgCoverFile.jpg",
+    agenda:"bgAgendaFile.jpg",
+    middle:"bgMiddleFile.jpg",
+    end:"bgEndFile.jpg"
+  };
+
+  function blobToDataUrl(blob){
+    return new Promise((res, rej)=>{
+      const fr = new FileReader();
+      fr.onload = () => res(String(fr.result||""));
+      fr.onerror = () => rej(new Error("FileReader blob failed"));
+      fr.readAsDataURL(blob);
+    });
+  }
+
+  async function tryFetchToDataUrl(relUrl){
+    try{
+      const r = await fetch(relUrl, { cache: "no-store" });
+      if(!r.ok) return "";
+      const blob = await r.blob();
+      if(!blob || !blob.size) return "";
+      return await blobToDataUrl(blob);
+    }catch(e){
+      return "";
+    }
+  }
+
+  async function ensureDefaultBackgrounds(){
+    migrateBgKey(LS_BG_COVER_OLD1,  LS_BG_COVER);
+    migrateBgKey(LS_BG_MIDDLE_OLD1, LS_BG_MIDDLE);
+    migrateBgKey(LS_BG_END_OLD1,    LS_BG_END);
+
+    const c0 = readLS(LS_BG_COVER);
+    const a0 = readLS(LS_BG_AGENDA);
+    const m0 = readLS(LS_BG_MIDDLE);
+    const e0 = readLS(LS_BG_END);
+
+    if(!c0.data){ const d = await tryFetchToDataUrl(AUTO_BG_FILES.cover);  if(d) writeLS(LS_BG_COVER,  { data: d, name: AUTO_BG_FILES.cover  }); }
+    if(!a0.data){ const d = await tryFetchToDataUrl(AUTO_BG_FILES.agenda); if(d) writeLS(LS_BG_AGENDA, { data: d, name: AUTO_BG_FILES.agenda }); }
+    if(!m0.data){ const d = await tryFetchToDataUrl(AUTO_BG_FILES.middle); if(d) writeLS(LS_BG_MIDDLE, { data: d, name: AUTO_BG_FILES.middle }); }
+    if(!e0.data){ const d = await tryFetchToDataUrl(AUTO_BG_FILES.end);    if(d) writeLS(LS_BG_END,    { data: d, name: AUTO_BG_FILES.end    }); }
+
+    const c = readLS(LS_BG_COVER);
+    const a = readLS(LS_BG_AGENDA);
+    const m = readLS(LS_BG_MIDDLE);
+    const e = readLS(LS_BG_END);
+
+    if(!c.data) writeLS(LS_BG_COVER,  { data: SEED_COVER,  name: "seed_cover.svg"  });
+    if(!a.data) writeLS(LS_BG_AGENDA, { data: SEED_AGENDA, name: "seed_agenda.svg" });
+    if(!m.data) writeLS(LS_BG_MIDDLE, { data: SEED_MIDDLE, name: "seed_middle.svg" });
+    if(!e.data) writeLS(LS_BG_END,    { data: SEED_END,    name: "seed_end.svg"    });
+  }
+
+  /* ========== Stato timeline (vera fix) ========== */
+  const timelines = [];   // [{id, suffix, phases, tasks, milestones, markers}]
+  let activeTlId = "";
+
+  function uid(prefix){
+    return prefix + "_" + Date.now() + "_" + Math.random().toString(16).slice(2);
+  }
+
+  function makeEmptyTimeline(){
+    return { id: uid("tl"), suffix:"", phases:[], tasks:[], milestones:[], markers:[] };
+  }
+
+  function getTL(){
+    let tl = timelines.find(t => t.id === activeTlId);
+    if(!tl){
+      tl = timelines[0];
+      activeTlId = tl ? tl.id : "";
+    }
+    return tl || null;
+  }
+
+  // >>> QUI c’è il trucco: manteniamo le vecchie variabili, ma le “puntiamo” sempre alla timeline attiva
+  let phases = [], tasks = [], milestones = [], markers = [];
+  function bindTL(){
+    const tl = getTL();
+    phases = tl ? tl.phases : [];
+    tasks  = tl ? tl.tasks : [];
+    milestones = tl ? tl.milestones : [];
+    markers    = tl ? tl.markers : [];
+  }
+
+  /* ========== SAL (globale, ma baseline/snapshot per timeline) ========== */
+  const salEntries=[];
+  let salSelectedId = "";
+  let salBaseline = null;
+
+  let lastSVGWidth=1400, lastSVGHeight=760;
+
+  /* ========== Date UTC (fix “scivola di 1 giorno”) ========== */
+  const toDate = (s)=>{
+    if(!s) return null;
+    const [y,m,d]=String(s).split('-').map(Number);
+    if(!y || !m || !d) return null;
+    return new Date(Date.UTC(y, (m-1), d));
+  };
+  const fmt = (d)=>{
+    const y=d.getUTCFullYear();
+    const m=String(d.getUTCMonth()+1).padStart(2,'0');
+    const da=String(d.getUTCDate()).padStart(2,'0');
+    return `${y}-${m}-${da}`;
+  };
+  const diffDays=(a,b)=>{
+    const au=Date.UTC(a.getUTCFullYear(),a.getUTCMonth(),a.getUTCDate());
+    const bu=Date.UTC(b.getUTCFullYear(),b.getUTCMonth(),b.getUTCDate());
+    return Math.round((bu-au)/86400000);
+  };
+  const shift=(d,n)=>{const x=new Date(d); x.setUTCDate(x.getUTCDate()+n); return x};
+  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+  const isWeekend=d=> d.getUTCDay()===6||d.getUTCDay()===0;
+  const itShort=d=> d.toLocaleDateString(undefined,{day:'2-digit',month:'2-digit', timeZone:'UTC'});
+  const itMonth=d=> d.toLocaleDateString(undefined,{month:'long',year:'numeric', timeZone:'UTC'}).replace(/^\w/, c=>c.toUpperCase());
+
+  const hexToRgb=h=>({r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),16),b:parseInt(h.slice(5,7),16)});
+  const rgbToHex=({r,g,b})=>"#"+[r,g,b].map(v=>v.toString(16).padStart(2,"0")).join("");
+  const mix=(c1,c2,t)=>rgbToHex({r:Math.round(c1.r+(c2.r-c1.r)*t),g:Math.round(c1.g+(c2.g-c1.g)*t),b:Math.round(c1.b+(c2.b-c1.b)*t)});
+  const lighten=(hex,amt)=>{const c=hexToRgb(hex); return amt>=0? mix(c,{r:255,g:255,b:255},amt):mix(c,{r:0,g:0,b:0},-amt)}
+  const darken=(hex,amt)=>{const c=hexToRgb(hex); return mix(c,{r:0,g:0,b:0},amt)}
+  const contrast=(hex)=>{const {r,g,b}=hexToRgb(hex); const L=(0.299*r+0.587*g+0.114*b)/255; return L>0.6?"#0f172a":"#fff"}
+
+  const canvas=document.createElement("canvas");
+  const ctx=canvas.getContext("2d");
+  ctx.font='12px Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif';
+  const measure=t=>Math.ceil(ctx.measureText(t).width);
+
+  const labelFor=t=>`${t.name}`;
+  const msText = m => `* ${m.name}`;
+
+
+  const linesFromTextarea = (s) => String(s||"")
+    .split(/\r?\n/)
+    .map(x=>x.trim())
+    .filter(Boolean);
+
+  /* ========== UI refs ========== */
+  const svg=$("#chart");
+
+  const titleInp=$("#title"), startBound=$("#startBound"), endBound=$("#endBound");
+  const rowHRange=$("#rowH"), rowHVal=$("#rowHVal");
+  const shadeWeekend=$("#shadeWeekend"), showToday=$("#showToday"),
+        progressStyle=$("#progressStyle"), labelSideSel=$("#labelSide"),
+        msInPhase=$("#msInPhase"), phaseBg=$("#phaseBg");
+
+  const kickoffDate = $("#kickoffDate");
+  const ownerRole = $("#ownerRole");
+  const clientName = $("#clientName");
+  const outOwner = $("#outOwner");
+  const outTitle=$("#outTitle");
+
+  const agenda=$("#agenda");
+  const bgCoverPick  = $("#bgCoverPick");
+  const bgAgendaPick = $("#bgAgendaPick");
+  const bgMiddlePick = $("#bgMiddlePick");
+  const bgEndPick    = $("#bgEndPick");
+
+  const purpose=$("#purpose");
+  const stakeAcs=$("#stakeAcs"), stakeClient=$("#stakeClient");
+  const licTitle=$("#licTitle"), licText=$("#licText");
+  const matTitle=$("#matTitle"), matText=$("#matText");
+  const prereq=$("#prereq"), comms=$("#comms"), collab=$("#collab");
+const context=$("#context");
+const scope=$("#scope");
+
+const governance=$("#governance");
+const dlgsNotes = $("#dlgsNotes");
+const deliverables=$("#deliverables");
+const risks=$("#risks");
+const outScope=$("#outScope");
+const nextSteps=$("#nextSteps");
+
+
+
+  const salDateInp = $("#salDate");
+  const addSalBtn = $("#addSalBtn");
+  const delSalBtn = $("#delSalBtn");
+  const salTableBody = $("#salTable tbody");
+  const salIssues = $("#salIssues");
+  const salNotes  = $("#salNotes");
+  const saveSalBtn = $("#saveSalBtn");
+  const riskEntries = [];
+  function markDirty(){ /* no-op: placeholder per future dirty-flag */ }
+
+
+  bgCoverPick.addEventListener("change", ()=> handleBgPick(bgCoverPick, LS_BG_COVER));
+  bgAgendaPick.addEventListener("change", ()=> handleBgPick(bgAgendaPick, LS_BG_AGENDA));
+  bgMiddlePick.addEventListener("change", ()=> handleBgPick(bgMiddlePick, LS_BG_MIDDLE));
+  bgEndPick.addEventListener("change", ()=> handleBgPick(bgEndPick, LS_BG_END));
+
+  $("#bgCoverClear").onclick = ()=> clearBg(LS_BG_COVER);
+  $("#bgAgendaClear").onclick = ()=> clearBg(LS_BG_AGENDA);
+  $("#bgMiddleClear").onclick = ()=> clearBg(LS_BG_MIDDLE);
+  $("#bgEndClear").onclick = ()=> clearBg(LS_BG_END);
+
+  const phaseName=$("#phaseName"), phaseColor=$("#phaseColor"), phTableBody=$("#phTable tbody");
+const taskName=$("#taskName"),
+      taskOwner=$("#taskOwner"),
+      taskStart=$("#taskStart"),
+      taskEnd=$("#taskEnd"),
+      taskProg=$("#taskProg"),
+      taskPhase=$("#taskPhase");
+const tasksBody=$("#tasksTable tbody");
+
+// Risk management (structured)
+const riskDesc=$("#riskDesc"), riskOwner=$("#riskOwner"),
+      riskProb=$("#riskProb"), riskSev=$("#riskSev"), riskMit=$("#riskMit");
+const addRiskBtn=$("#addRiskBtn"), clearRisksBtn=$("#clearRisksBtn"),
+      risksBody=$("#risksTable tbody");
+  const msName=$("#msName"), msDate=$("#msDate"), msPhase=$("#msPhase"), msBody=$("#msTable tbody");
+  const mkLabel=$("#mkLabel"), mkDate=$("#mkDate"), mkBody=$("#mkTable tbody");
+
+  const csvFile=$("#csvFile"), uploadCsv=$("#uploadCsv"), downloadTpl=$("#downloadTpl");
+
+  const clearBtn=$("#clearBtn"), resetBtn=$("#resetBtn");
+  const exportSvgBtn=$("#exportSvgBtn"), exportPngBtn=$("#exportPngBtn");
+  const exportPptxBtn=$("#exportPptxBtn");
+  const saveAllBtn=$("#saveAllBtn");
+  const restoreBtn=$("#restoreBtn"), restoreFile=$("#restoreFile");
+
+  rowHRange.addEventListener("input",()=> rowHVal.textContent=rowHRange.value);
+  [shadeWeekend, showToday, phaseBg, progressStyle, msInPhase].forEach(el => el.addEventListener('change', render));
+  labelSideSel.addEventListener('change', ()=>{ rebuildTasksTable(); render(); });
+  rowHRange.addEventListener('change', render);
+
+  titleInp.addEventListener("input", ()=> { outTitle.textContent=titleInp.value||"Gantt"; });
+  ownerRole.addEventListener("input", ()=> { if(outOwner) outOwner.textContent = (ownerRole.value || "Nome Cognome — Ruolo"); });
+
+  /* ========== Timeline UI ========== */
+  const tlSelect = $("#tlSelect");
+  const tlSuffix = $("#tlSuffix");
+  const tlAddBtn = $("#tlAddBtn");
+  const tlDupBtn = $("#tlDupBtn");
+  const tlDelBtn = $("#tlDelBtn");
+
+  function timelineDisplayName(tl, idx){
+    const n = idx != null ? (idx+1) : (timelines.indexOf(tl)+1);
+    const suf = (tl.suffix || "").trim();
+    return suf ? `Timeline ${n} — ${suf}` : `Timeline ${n}`;
+  }
+
+  function rebuildTimelineSelect(){
+    tlSelect.innerHTML = "";
+    timelines.forEach((tl,i)=>{
+      const opt = document.createElement("option");
+      opt.value = tl.id;
+      opt.textContent = timelineDisplayName(tl, i);
+      tlSelect.appendChild(opt);
+    });
+    if(activeTlId) tlSelect.value = activeTlId;
+    const cur = getTL();
+    tlSuffix.value = cur ? (cur.suffix || "") : "";
+    tlDelBtn.disabled = timelines.length <= 1;
+  }
+
+  function persistSalEdits(){
+    const e = salEntries.find(e=>e.id===salSelectedId) || null;
+    if(!e) return;
+    e.issuesText = salIssues.value || "";
+    e.notesText  = salNotes.value  || "";
+  }
+
+  function switchTimeline(id){
+    persistSalEdits();
+    activeTlId = id;
+    bindTL();
+    const cur = getTL();
+    tlSuffix.value = cur ? (cur.suffix || "") : "";
+    redrawPhaseTable();
+    refreshPhaseSelects();
+    rebuildTasksTable();
+    msBody.innerHTML=""; (milestones||[]).forEach(addMsRow);
+    mkBody.innerHTML=""; (markers||[]).forEach(addMkRow);
+    render();
+  }
+
+  tlSelect.addEventListener("change", ()=> switchTimeline(tlSelect.value));
+
+  tlSuffix.addEventListener("input", ()=>{
+    const cur = getTL(); if(!cur) return;
+    cur.suffix = tlSuffix.value || "";
+    rebuildTimelineSelect();
+    render();
+  });
+
+  tlAddBtn.onclick = ()=>{
+    const tl = makeEmptyTimeline();
+    seedTimelineDefaults(tl);
+    timelines.push(tl);
+    activeTlId = tl.id;
+    rebuildTimelineSelect();
+    switchTimeline(activeTlId);
+  };
+
+  tlDupBtn.onclick = ()=>{
+    const cur = getTL(); if(!cur) return;
+    const copy = deepCloneTimeline(cur);
+    timelines.push(copy);
+    activeTlId = copy.id;
+    rebuildTimelineSelect();
+    switchTimeline(activeTlId);
+  };
+
+  tlDelBtn.onclick = ()=>{
+    if(timelines.length <= 1) return;
+    const idx = timelines.findIndex(t=>t.id===activeTlId);
+    if(idx<0) return;
+    timelines.splice(idx,1);
+    activeTlId = timelines[Math.max(0, idx-1)].id;
+    rebuildTimelineSelect();
+    switchTimeline(activeTlId);
+  };
+
+  /* ========== Agenda sync ========== */
+function buildDefaultAgendaBase(){
+  return [
+    "Contesto e obiettivi",
+    "Scope",
+    "Stakeholder, ruoli e governance",
+    "Fasi del progetto, timeline e milestone",
+    "Timeline Chart",
+    "Deliverable",
+    "Prerequisiti",
+    ( (licTitle?.value||"BOM Licenze").trim() || "BOM Licenze" ),
+    ( (matTitle?.value||"BOM Materiali").trim() || "BOM Materiali" ),
+    "Piano di comunicazione e collaboration",
+    "Rischi e dipendenze",
+    "Out of scope",
+    "Prossimi passi e Q&A"
+  ];
+}
+
+  function isSalLine(line){
+    const s = String(line||"").trim();
+    return /^SAL(\s*-\s*)?/i.test(s);
+  }
+  function syncAgendaWithSalSmart(){
+    const current = linesFromTextarea(agenda.value);
+
+    if(current.length === 0){
+      const base = buildDefaultAgendaBase();
+      const salLines = salEntries.map(e=>{
+        const d = (e.dateLabel||"").trim();
+        return d ? `SAL - ${d}` : "SAL";
+      });
+      agenda.value = base.concat(salLines).join("\n");
+      return;
+    }
+
+    const kept = current.filter(l => !isSalLine(l));
+    const salLines = salEntries.map(e=>{
+      const d = (e.dateLabel||"").trim();
+      return d ? `SAL - ${d}` : "SAL";
+    });
+
+    const seen = new Set(kept.map(x=>x.trim().toLowerCase()));
+    const merged = kept.slice();
+    salLines.forEach(l=>{
+      const k = l.trim().toLowerCase();
+      if(!seen.has(k)){
+        merged.push(l);
+        seen.add(k);
+      }
+    });
+
+    agenda.value = merged.join("\n");
+  }
+  [licTitle, matTitle].forEach(inp=>{
+    inp.addEventListener("input", ()=>{
+      const cur = linesFromTextarea(agenda.value);
+      const curNoSal = cur.filter(l=>!isSalLine(l));
+      const base = buildDefaultAgendaBase();
+      const looksLikeBase = curNoSal.length === base.length && curNoSal.every((l,i)=>l.trim()===base[i].trim());
+      if(cur.length===0 || looksLikeBase){
+        syncAgendaWithSalSmart();
+      }
+    });
+  });
+
+  /* ========== SAL baseline/snapshot per timeline (fix punto 5/9) ========== */
+  function captureCurrentSnapshot(){
+    return {
+      timelines: timelines.map(tl => ({
+        id: tl.id,
+            tasks: tl.tasks.map(t => ({
+            id: t.id,
+            name: t.name,
+            owner: t.owner || "",     // NEW
+            start: fmt(t.start),
+            end: fmt(t.end),
+            prog: clamp(parseInt(t.prog||0,10),0,100),
+            phaseId: t.phaseId,
+            labelSide: t.labelSide || null
+            }))
+      }))
+    };
+  }
+
+  function ensureSalBaseline(){
+    if(salBaseline) return;
+    salBaseline = {
+      createdAtISO: (new Date()).toISOString(),
+      timelines: timelines.map(tl => ({
+        id: tl.id,
+        tasks: tl.tasks.map(t=>({ id:t.id, prog:0 }))
+      }))
+    };
+  }
+
+  function getBaselineTL(tlId){
+    if(!salBaseline) return null;
+    if(!Array.isArray(salBaseline.timelines)) salBaseline.timelines = [];
+    let b = salBaseline.timelines.find(x=>x.id===tlId);
+    if(!b){
+      b = { id: tlId, tasks: [] };
+      salBaseline.timelines.push(b);
+    }
+    if(!Array.isArray(b.tasks)) b.tasks = [];
+    return b;
+  }
+
+  function findSalEntry(id){ return salEntries.find(e=>e.id===id) || null; }
+
+  function salSelect(id){
+    persistSalEdits();
+    salSelectedId = id || "";
+    const e = findSalEntry(salSelectedId);
+
+    if(!e){
+      salIssues.value = "";
+      salNotes.value = "";
+    }else{
+      salIssues.value = e.issuesText || "";
+      salNotes.value  = e.notesText  || "";
+    }
+    redrawSalTable();
+  }
+
+  function redrawSalTable(){
+    salTableBody.innerHTML = "";
+    salEntries.forEach((e,i)=>{
+      const tr=document.createElement("tr");
+      const isSel = (e.id===salSelectedId);
+      const created = (e.createdAtISO||"").replace("T"," ").slice(0,19);
+      tr.innerHTML = `
+        <td>${i+1}</td>
+        <td>${escapeHtml(e.dateLabel||"")}</td>
+        <td class="muted">${escapeHtml(created)}</td>
+        <td>${isSel ? '<span class="chip">✓</span>' : '<button class="btn alt s" data-sel="'+escapeAttr(e.id)+'">Seleziona</button>'}</td>
+      `;
+      const btn = tr.querySelector("button[data-sel]");
+      if(btn) btn.onclick = ()=> salSelect(btn.getAttribute("data-sel"));
+      salTableBody.appendChild(tr);
+    });
+    delSalBtn.disabled = !salSelectedId;
+  }
+
+  addSalBtn.onclick = ()=>{
+    persistSalEdits();
+
+    const dateLabel = (salDateInp.value||"").trim();
+    if(!dateLabel){ alert("Inserisci la data SAL (testo libero)."); return; }
+    // check “almeno un task” su tutte le timeline (non solo quella attiva)
+    const anyTask = timelines.some(tl => (tl.tasks||[]).length>0);
+    if(!anyTask){ alert("Aggiungi almeno un task prima di creare un SAL."); return; }
+
+    ensureSalBaseline();
+
+    const entry = {
+      id: "sal_"+Date.now()+"_"+Math.random().toString(16).slice(2),
+      dateLabel,
+      createdAtISO: (new Date()).toISOString(),
+      issuesText: "",
+      notesText: "",
+      snapshot: captureCurrentSnapshot()
+    };
+    salEntries.push(entry);
+    salSelect(entry.id);
+    syncAgendaWithSalSmart();
+  };
+
+  delSalBtn.onclick = ()=>{
+    if(!salSelectedId) return;
+    const i = salEntries.findIndex(x=>x.id===salSelectedId);
+    if(i<0) return;
+    salEntries.splice(i,1);
+    salSelectedId = "";
+    salIssues.value = "";
+    salNotes.value = "";
+    redrawSalTable();
+    syncAgendaWithSalSmart();
+  };
+
+  function saveSelectedSal(){
+    const e = findSalEntry(salSelectedId);
+    if(!e){ alert("Seleziona un SAL da salvare."); return; }
+    persistSalEdits();
+    e.snapshot = captureCurrentSnapshot();
+    e.updatedAtISO = (new Date()).toISOString();
+    redrawSalTable();
+    alert("SAL salvato.");
+  }
+  saveSalBtn.onclick = saveSelectedSal;
+
+  [salIssues, salNotes].forEach(el=>{
+    el.addEventListener("input", ()=>{
+      const e = findSalEntry(salSelectedId);
+      if(!e) return;
+      e.issuesText = salIssues.value || "";
+      e.notesText  = salNotes.value  || "";
+    });
+  });
+
+  /* ========== Palette colori ========== */
+  const PALETTE = [
+    {n:"Giallo",c:"#f59e0b"},{n:"Arancio",c:"#f97316"},{n:"Rosso",c:"#ef4444"},
+    {n:"Magenta",c:"#d946ef"},{n:"Viola",c:"#8b5cf6"},{n:"Blu",c:"#3b82f6"},
+    {n:"Azzurro",c:"#0ea5e9"},{n:"Teal",c:"#14b8a6"},{n:"Verde",c:"#22c55e"},
+    {n:"Lime",c:"#84cc16"},{n:"Oliva",c:"#65a30d"},{n:"Marrone",c:"#a16207"},
+    {n:"Rosa",c:"#ec4899"},{n:"Grigio",c:"#64748b"},{n:"Navy",c:"#1e3a8a"}
+  ];
+  PALETTE.forEach(p=>{
+    const o=document.createElement("option");
+    o.value=p.c; o.textContent=p.n;
+    o.style.background=p.c; o.style.color=contrast(p.c);
+    phaseColor.appendChild(o);
+  });
+
+  /* ========== Fasi ========== */
+  function refreshPhaseSelects(){
+    const keepT=taskPhase.value, keepM=msPhase.value;
+    taskPhase.innerHTML=""; msPhase.innerHTML="";
+    phases.forEach(ph=>{
+      const a=document.createElement("option"); a.value=ph.id; a.textContent=ph.name; taskPhase.appendChild(a);
+      const b=document.createElement("option"); b.value=ph.id; b.textContent=ph.name; msPhase.appendChild(b);
+    });
+    if(keepT && [...taskPhase.options].some(o=>o.value===keepT)) taskPhase.value=keepT;
+    if(keepM && [...msPhase.options].some(o=>o.value===keepM)) msPhase.value=keepM;
+  }
+
+  function redrawPhaseTable(){
+    phTableBody.innerHTML="";
+    phases.forEach((ph,i)=>{
+      const tr=document.createElement("tr");
+      const colorChip = `<span class="chip" style="background:${lighten(ph.color,.85)};border-color:#cfd7ff;color:#1c2a7a">
+        <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:${ph.color};border:1px solid #cfd7ff;vertical-align:-2px;margin-right:6px"></span>
+        ${ph.color}
+      </span>`;
+      tr.innerHTML=`<td>${i+1}</td>
+        <td>${escapeHtml(ph.name)}</td>
+        <td>${colorChip}</td>
+        <td class="tbl-actions">
+          <button class="btn alt s" data-act="edit" data-i="${i}">✎</button>
+          <button class="btn alt s" data-act="del"  data-i="${i}">✕</button>
+        </td>`;
+      tr.querySelector('[data-act="del"]').onclick=(ev)=>{
+        const idx=parseInt(ev.target.getAttribute("data-i"),10);
+        phases.splice(idx,1);
+        redrawPhaseTable(); refreshPhaseSelects(); render();
+      };
+      tr.querySelector('[data-act="edit"]').onclick=()=> editPhaseRow(i, tr);
+      phTableBody.appendChild(tr);
+    });
+  }
+
+  function editPhaseRow(i, tr){
+    const ph=phases[i];
+    tr.innerHTML=`<td>${i+1}</td>
+      <td><input class="w-130" type="text" value="${escapeAttr(ph.name)}"/></td>
+      <td><select class="w-130">${PALETTE.map(p=>`<option value="${p.c}" ${p.c===ph.color?'selected':''}>${p.n}</option>`).join('')}</select></td>
+      <td class="tbl-actions">
+        <button class="btn s" data-act="save">Salva</button>
+        <button class="btn alt s" data-act="cancel">Annulla</button>
+      </td>`;
+    tr.querySelector('[data-act="save"]').onclick=()=>{
+      const nv=tr.querySelector('input').value.trim();
+      const col=tr.querySelector('select').value;
+      if(nv){ ph.name=nv; ph.color=col; redrawPhaseTable(); refreshPhaseSelects(); render(); }
+    };
+    tr.querySelector('[data-act="cancel"]').onclick=()=> redrawPhaseTable();
+  }
+
+  $("#addPhase").onclick=()=>{
+    if(!phaseName.value){ alert("Nome fase mancante"); return; }
+    phases.push({id:"ph"+Date.now()+Math.floor(Math.random()*9999), name:phaseName.value, color:phaseColor.value});
+    phaseName.value="";
+    redrawPhaseTable(); refreshPhaseSelects(); render();
+  };
+  $("#phaseUp").onclick=()=>{ if(phases.length<2) return; phases.unshift(phases.pop()); redrawPhaseTable(); refreshPhaseSelects(); render(); };
+  $("#phaseDown").onclick=()=>{ if(phases.length<2) return; phases.push(phases.shift()); redrawPhaseTable(); refreshPhaseSelects(); render(); };
+
+  /* ========== Task ========== */
+  $("#addTask").onclick=()=>{
+    if(!taskName.value||!taskStart.value||!taskEnd.value||!taskPhase.value){ alert("Completa titolo, date e fase"); return; }
+    const s=toDate(taskStart.value), e=toDate(taskEnd.value);
+    if(!s||!e||e<s){ alert("Date non valide"); return; }
+const t={
+  id:"t"+Date.now()+Math.random().toString(16).slice(2),
+  phaseId:taskPhase.value,
+  name:taskName.value,
+  owner: (taskOwner.value||"").trim(),   // <-- NEW
+  start:s,
+  end:e,
+  prog:parseInt(taskProg.value||0,10),
+  labelSide:""
+};
+
+    taskOwner.value="";
+
+    tasks.push(t);
+
+    // se baseline esiste, aggiungi anche lì (per la timeline attiva)
+    if(salBaseline){
+      const btl = getBaselineTL(activeTlId);
+      if(btl && !btl.tasks.some(x=>x.id===t.id)){
+        btl.tasks.push({ id:t.id, prog:0 });
+      }
+    }
+
+    taskProg.value = "0";
+    rebuildTasksTable();
+    taskName.value = "";
+    taskStart.value = "";
+    taskEnd.value = "";
+    taskProg.value = "0";
+    render();
+  };
+
+function riskLevel(prob, sev){
+  const score = prob*sev;
+  if(score>=16) return "Critical";
+  if(score>=9) return "High";
+  if(score>=4) return "Medium";
+  return "Low";
+}
+
+function rebuildRisksTable(){
+  if(!risksBody) return;
+  risksBody.innerHTML="";
+  riskEntries.forEach((r,i)=>{
+    const tr=document.createElement("tr");
+    const lvl=riskLevel(r.prob,r.sev);
+    tr.innerHTML = `<td>${i+1}</td>
+      <td>${escapeHtml(r.desc)}</td>
+      <td>${escapeHtml(r.owner||"")}</td>
+      <td>${r.prob}</td>
+      <td>${r.sev}</td>
+      <td><span class="pill ${lvl.toLowerCase()}">${lvl}</span></td>
+      <td>${escapeHtml(r.mit||"")}</td>
+    <td class="tbl-actions">
+      <button class="btn alt s" data-act="edit">✎</button>
+      <button class="btn danger s" data-act="del">✕</button>
+    </td>`;
+    tr.querySelector('[data-act="del"]').onclick=()=>{
+      if(!confirm("Eliminare rischio?")) return;
+      riskEntries.splice(i,1);
+      rebuildRisksTable();
+      markDirty();
+    };
+    tr.querySelector('[data-act="edit"]').onclick=()=>openRiskEdit(i);
+    risksBody.appendChild(tr);
+  });
+}
+
+let riskEditIdx=-1;
+
+function openRiskEdit(i){
+  riskEditIdx=i;
+  const r=riskEntries[i];
+  riskDesc.value=r.desc||"";
+  riskOwner.value=r.owner||"";
+  riskProb.value=String(r.prob||3);
+  riskSev.value=String(r.sev||3);
+  riskMit.value=r.mit||"";
+  addRiskBtn.textContent="Aggiorna rischio";
+}
+
+function clearRiskForm(){
+  riskEditIdx=-1;
+  riskDesc.value="";
+  riskOwner.value="";
+  riskProb.value="3";
+  riskSev.value="3";
+  riskMit.value="";
+  addRiskBtn.textContent="Aggiungi rischio";
+}
+
+addRiskBtn?.addEventListener("click", ()=>{
+  const desc=riskDesc.value.trim();
+  if(!desc){ alert("Descrizione rischio obbligatoria"); return; }
+  const obj={
+    id: uid(),
+    desc,
+    owner: riskOwner.value.trim(),
+    prob: clamp(parseInt(riskProb.value,10)||3,1,5),
+    sev: clamp(parseInt(riskSev.value,10)||3,1,5),
+    mit: riskMit.value.trim()
+  };
+  if(riskEditIdx>=0){
+    obj.id = riskEntries[riskEditIdx].id;
+    riskEntries[riskEditIdx]=obj;
+  } else {
+    riskEntries.push(obj);
+  }
+  rebuildRisksTable();
+  clearRiskForm();
+  markDirty();
+});
+
+clearRisksBtn?.addEventListener("click", ()=>{
+  if(!riskEntries.length) return;
+  if(!confirm("Svuotare la lista rischi?")) return;
+  riskEntries.length=0;
+  rebuildRisksTable();
+  clearRiskForm();
+  markDirty();
+});
+
+
+function statusFromProg(p){
+  const v = clamp(parseInt(p||0,10), 0, 100);
+  if(v >= 100) return "Done";
+  if(v > 0) return "In progress";
+  return "Not started";
+}
+
+function rebuildTasksTable(){
+  tasksBody.innerHTML="";
+  tasks.forEach((t, idx)=> addTaskRow(t, idx));
+}
+
+function addTaskRow(t, idx){
+  const tr=document.createElement("tr");
+
+  const s = fmt(t.start);
+  const e = fmt(t.end);
+  const days = diffDays(t.start, t.end) + 1;
+  const prog = clamp(parseInt(t.prog||0,10), 0, 100);
+  const status = statusFromProg(prog);
+
+  tr.innerHTML = `
+    <td>${idx+1}</td>
+    <td>${escapeHtml(t.name||"")}</td>
+    <td>${escapeHtml(t.owner||"")}</td>
+    <td>${s}</td>
+    <td>${e}</td>
+    <td>${days}g</td>
+    <td><span class="chip">${escapeHtml(status)}</span></td>
+    <td>${prog}%</td>
+    <td class="tbl-actions">
+      <button class="btn alt s" data-act="edit">✎</button>
+      <button class="btn alt s" data-act="del">✕</button>
+    </td>
+  `;
+
+  tr.querySelector('[data-act="del"]').onclick = ()=>{
+    const i = tasks.indexOf(t);
+    if(i>-1) tasks.splice(i,1);
+
+    // baseline: rimuovi da baseline della timeline attiva
+    if(salBaseline){
+      const btl = getBaselineTL(activeTlId);
+      const bi = btl.tasks.findIndex(x=>x.id===t.id);
+      if(bi>-1) btl.tasks.splice(bi,1);
+    }
+
+    rebuildTasksTable();
+    render();
+  };
+
+  tr.querySelector('[data-act="edit"]').onclick = ()=> editTaskRow(t, tr);
+
+  tasksBody.appendChild(tr);
+}
+
+function editTaskRow(t, tr){
+  const prog = clamp(parseInt(t.prog||0,10), 0, 100);
+
+  tr.innerHTML = `
+    <td class="muted">—</td>
+
+    <td>
+      <input class="w-130" type="text" value="${escapeAttr(t.name||"")}"/>
+      <div class="muted" style="font-size:11px;margin-top:4px">Activity</div>
+    </td>
+
+    <td>
+      <input class="w-130" type="text" value="${escapeAttr(t.owner||"")}"/>
+      <div class="muted" style="font-size:11px;margin-top:4px">Assigned To</div>
+    </td>
+
+    <td><input class="w-110" type="date" value="${fmt(t.start)}"/></td>
+    <td><input class="w-110" type="date" value="${fmt(t.end)}"/></td>
+
+    <td class="muted">${diffDays(t.start,t.end)+1}g</td>
+
+    <td>
+      <select class="w-130">
+        ${phases.map(p=>`<option value="${p.id}" ${p.id===t.phaseId?'selected':''}>${escapeHtml(p.name)}</option>`).join('')}
+      </select>
+      <div class="muted" style="font-size:11px;margin-top:4px">Phase</div>
+    </td>
+
+    <td>
+      <input class="w-60" type="number" min="0" max="100" step="1" value="${prog}"/>
+    </td>
+
+    <td class="tbl-actions">
+      <button class="btn s" data-act="save">Salva</button>
+      <button class="btn alt s" data-act="cancel">Annulla</button>
+    </td>
+  `;
+
+  tr.querySelector('[data-act="save"]').onclick = ()=>{
+    const nameInp  = tr.querySelectorAll('input')[0];
+    const ownerInp = tr.querySelectorAll('input')[1];
+    const stInp    = tr.querySelectorAll('input')[2];
+    const enInp    = tr.querySelectorAll('input')[3];
+    const progInp  = tr.querySelectorAll('input')[4];
+    const phaseSel = tr.querySelector('select');
+
+    const s = toDate(stInp.value);
+    const e = toDate(enInp.value);
+    if(!s || !e || e < s){ alert("Date non valide"); return; }
+
+    t.name    = (nameInp.value||"").trim() || t.name;
+    t.owner   = (ownerInp.value||"").trim();           // NEW
+    t.start   = s;
+    t.end     = e;
+    t.phaseId = phaseSel.value;
+    t.prog    = clamp(parseInt(progInp.value||0,10), 0, 100);
+
+    rebuildTasksTable();
+    render();
+  };
+
+  tr.querySelector('[data-act="cancel"]').onclick = ()=> rebuildTasksTable();
+}
+
+
+  /* ========== Milestone & Marker ========== */
+  $("#addMs").onclick=()=>{
+    if(!msName.value||!msDate.value){ alert("Completa milestone e data"); return; }
+    const d=toDate(msDate.value); if(!d){ alert("Data non valida"); return; }
+    const m={id:"m"+Date.now()+Math.random().toString(16).slice(2),name:msName.value,date:d,phaseId:msPhase.value||"",yOffset:0};
+    milestones.push(m);
+    addMsRow(m);
+    msName.value=msDate.value="";
+    render();
+  };
+
+  function addMsRow(m){
+    const ph=phases.find(p=>p.id===m.phaseId);
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${escapeHtml(m.name)}</td><td>${fmt(m.date)}</td><td>${ph?escapeHtml(ph.name):"—"}</td>
+      <td class="tbl-actions"><button class="btn alt s" data-act="edit">✎</button><button class="btn alt s" data-act="del">✕</button></td>`;
+    tr.querySelector('[data-act="del"]').onclick=()=>{
+      const i=milestones.indexOf(m);
+      if(i>-1) milestones.splice(i,1);
+      tr.remove();
+      render();
+    };
+    tr.querySelector('[data-act="edit"]').onclick=()=> editMsRow(m, tr);
+    msBody.appendChild(tr);
+  }
+
+  function editMsRow(m, tr){
+    tr.innerHTML=`<td><input class="w-130" type="text" value="${escapeAttr(m.name)}"/></td>
+      <td><input class="w-110" type="date" value="${fmt(m.date)}"/></td>
+      <td><select class="w-130"><option value="">—</option>${phases.map(p=>`<option value="${p.id}" ${p.id===m.phaseId?'selected':''}>${escapeHtml(p.name)}</option>`).join('')}</select></td>
+      <td class="tbl-actions">
+        <button class="btn s" data-act="save">Salva</button>
+        <button class="btn alt s" data-act="cancel">Annulla</button>
+      </td>`;
+    tr.querySelector('[data-act="save"]').onclick=()=>{
+      const nameInp=tr.querySelectorAll('input')[0];
+      const dateInp=tr.querySelectorAll('input')[1];
+      const sel=tr.querySelector('select');
+      const d=toDate(dateInp.value); if(!d){ alert("Data non valida"); return; }
+      m.name=nameInp.value.trim()||m.name;
+      m.date=d;
+      m.phaseId=sel.value;
+      m.yOffset=m.yOffset||0;
+      msBody.innerHTML="";
+      milestones.forEach(addMsRow);
+      render();
+    };
+    tr.querySelector('[data-act="cancel"]').onclick=()=>{
+      msBody.innerHTML="";
+      milestones.forEach(addMsRow);
+    };
+  }
+
+  $("#addMk").onclick=()=>{
+    if(!mkLabel.value||!mkDate.value){ alert("Completa etichetta e data"); return; }
+    const d=toDate(mkDate.value); if(!d){ alert("Data non valida"); return; }
+    const mk={id:"k"+Date.now()+Math.random().toString(16).slice(2),label:mkLabel.value,date:d};
+    markers.push(mk);
+    addMkRow(mk);
+    mkLabel.value=mkDate.value="";
+    render();
+  };
+
+  function addMkRow(mk){
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${escapeHtml(mk.label)}</td><td>${fmt(mk.date)}</td>
+      <td class="tbl-actions"><button class="btn alt s" data-act="edit">✎</button><button class="btn alt s" data-act="del">✕</button></td>`;
+    tr.querySelector('[data-act="del"]').onclick=()=>{
+      const i=markers.indexOf(mk);
+      if(i>-1) markers.splice(i,1);
+      tr.remove();
+      render();
+    };
+    tr.querySelector('[data-act="edit"]').onclick=()=> editMkRow(mk, tr);
+    mkBody.appendChild(tr);
+  }
+
+  function editMkRow(mk, tr){
+    tr.innerHTML=`<td><input class="w-130" type="text" value="${escapeAttr(mk.label)}"/></td>
+      <td><input class="w-110" type="date" value="${fmt(mk.date)}"/></td>
+      <td class="tbl-actions">
+        <button class="btn s" data-act="save">Salva</button>
+        <button class="btn alt s" data-act="cancel">Annulla</button>
+      </td>`;
+    tr.querySelector('[data-act="save"]').onclick=()=>{
+      const lab=tr.querySelectorAll('input')[0];
+      const dateInp=tr.querySelectorAll('input')[1];
+      const d=toDate(dateInp.value); if(!d){ alert("Data non valida"); return; }
+      mk.label=lab.value.trim()||mk.label;
+      mk.date=d;
+      mkBody.innerHTML="";
+      markers.forEach(addMkRow);
+      render();
+    };
+    tr.querySelector('[data-act="cancel"]').onclick=()=>{
+      mkBody.innerHTML="";
+      markers.forEach(addMkRow);
+    };
+  }
+
+  /* ========== CSV Template (import su timeline attiva) ========== */
+  const CSV_TEMPLATE=`TYPE,PHASE,PHASE_COLOR,TASK,START,END,PROGRESS,LABEL_SIDE,MILESTONE,MILESTONE_DATE,MILESTONE_PHASE,MARKER_LABEL,MARKER_DATE
+phase,FASE 1 — KICKOFF E ANALISI,#f59e0b,,,,,,,
+phase,FASE 2 — SETUP EDR PILOTA,#22c55e,,,,,,,
+task,FASE 1 — KICKOFF E ANALISI,,Kickoff interno e con cliente,2025-10-21,2025-10-23,0,,,,,
+task,FASE 1 — KICKOFF E ANALISI,,Definizione attività e tempi (Gantt),2025-10-22,2025-10-24,0,,,,,
+task,FASE 2 — SETUP EDR PILOTA,,Creazione tenant,2025-10-23,2025-10-27,0,,,,,
+milestone,,,,,,,"Go Live",2025-11-10,FASE 4 — GO LIVE,,
+marker,,,,,,,,,,"31/10 SAL",2025-10-31`;
+  downloadTpl.onclick=()=>{
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob([CSV_TEMPLATE],{type:"text/csv;charset=utf-8"}));
+    a.download="gantt_template.csv";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+  uploadCsv.onclick=()=> csvFile.click();
+  csvFile.onchange=()=>{
+    const f=csvFile.files[0]; if(!f) return;
+    f.text().then(txt=>{ importCsv(txt); render(); });
+  };
+
+  function importCsv(text){
+    if(!text.trim()) return;
+
+    // importa sulla timeline attiva
+    phases.length=0; tasks.length=0; milestones.length=0; markers.length=0;
+
+    // reset SAL
+    salBaseline = null;
+    salEntries.length = 0;
+    salSelectedId = "";
+    redrawSalTable();
+    salIssues.value = ""; salNotes.value = "";
+    syncAgendaWithSalSmart();
+
+    const lines=text.replace(/\r\n/g,"\n").split("\n").filter(Boolean);
+    const head=lines.shift().split(","); const idx=n=>head.indexOf(n);
+    lines.forEach(line=>{
+      const row=line.split(",").map(x=>x.trim());
+      const type=(row[idx("TYPE")]||"").toLowerCase();
+      if(type==="phase"){
+        const name=row[idx("PHASE")], color=row[idx("PHASE_COLOR")]||"#64748b";
+        if(name) phases.push({id:"ph"+(Date.now())+Math.random().toString(16).slice(2), name, color});
+      }else if(type==="task"){
+        const phName=row[idx("PHASE")]; const ph=findOrCreatePhase(phName);
+        const t=row[idx("TASK")], s=row[idx("START")], e=row[idx("END")], p=parseInt(row[idx("PROGRESS")]||"0",10);
+        const ls = (row[idx("LABEL_SIDE")]||"").toLowerCase();
+        if(ph && t && s && e) tasks.push({id:"t"+Date.now()+Math.random().toString(16).slice(2),phaseId:ph.id,name:t,start:toDate(s),end:toDate(e),prog:clamp(p,0,100),labelSide:ls});
+      }else if(type==="milestone"){
+        const m=row[idx("MILESTONE")], d=row[idx("MILESTONE_DATE")], phName=row[idx("MILESTONE_PHASE")];
+        const ph=phName?findOrCreatePhase(phName):null;
+        if(m && d) milestones.push({id:"m"+Date.now()+Math.random().toString(16).slice(2),name:m,date:toDate(d),phaseId:ph?ph.id:"",yOffset:0});
+      }else if(type==="marker"){
+        const l=row[idx("MARKER_LABEL")], d=row[idx("MARKER_DATE")];
+        if(l && d) markers.push({id:"k"+Date.now()+Math.random().toString(16).slice(2),label:l,date:toDate(d)});
+      }
+    });
+    redrawPhaseTable(); refreshPhaseSelects();
+    rebuildTasksTable();
+    msBody.innerHTML=""; milestones.forEach(addMsRow);
+    mkBody.innerHTML=""; markers.forEach(addMkRow);
+
+    function findOrCreatePhase(name){
+      if(!name) return null;
+      let ph=phases.find(p=>p.name===name);
+      if(!ph){ ph={id:"ph"+(Date.now())+Math.random().toString(16).slice(2), name, color:"#64748b"}; phases.push(ph); }
+      return ph;
+    }
+  }
+
+  /* ========== Salva/Ripristina (FILE) - compatibile (fix baseline + timelines) ========== */
+  const PROJECT_SCHEMA_VERSION = 7;
+
+  function safeName(s){ return String(s).trim().replace(/[\\\/:*?"<>|]+/g,"-").slice(0,80) || "progetto"; }
+
+function serializeState(projectName){
+  // Porta gli edit SAL nel modello dati prima di serializzare
+  if (typeof persistSalEdits === "function") persistSalEdits();
+
+  const v = (el) => (el && "value" in el) ? (el.value || "") : "";
+  const b = (el) => !!(el && el.checked);
+  const n = (el, def=0) => {
+    const x = parseInt(v(el), 10);
+    return Number.isFinite(x) ? x : def;
+  };
+
+  return {
+    meta:{
+      name: projectName || "",
+      savedAtISO: (new Date()).toISOString(),
+      schemaVersion: PROJECT_SCHEMA_VERSION,
+      appVersion: APP_VERSION
+    },
+    ui:{
+      title: v(titleInp),
+      startBound: v(startBound),
+      endBound: v(endBound),
+      rowH: n(rowHRange, 36),
+      shadeWeekend: b(shadeWeekend),
+      showToday: b(showToday),
+      phaseBg: b(phaseBg),
+      progressStyle: v(progressStyle) || "tick",
+      labelSide: v(labelSideSel) || "right",
+      msInPhase: b(msInPhase),
+      kickoffDate: v(kickoffDate),
+      ownerRole: v(ownerRole),
+      clientName: v(clientName),
+      salDate: v(salDateInp),
+      activeTlId: (typeof activeTlId === "string" ? activeTlId : "") || ""
+    },
+    sections:{
+      agenda: v(agenda),
+      purpose: v(purpose),
+      dlgsNotes: v(dlgsNotes),
+
+      context: v(context),
+      scope: v(scope),
+
+      stakeAcs: v(stakeAcs),
+      stakeClient: v(stakeClient),
+      governance: v(governance),
+
+      licTitle: v(licTitle),
+      licText: v(licText),
+
+      matTitle: v(matTitle),
+      matText: v(matText),
+
+      deliverables: v(deliverables),
+      prereq: v(prereq),
+      comms: v(comms),
+      collab: v(collab),
+
+      risks: v(risks),
+      outScope: v(outScope),
+      nextSteps: v(nextSteps)
+    },
+    data:{
+      timelines: (timelines||[]).map(tl => ({
+        id: tl.id,
+        suffix: tl.suffix || "",
+        phases: (tl.phases||[]).map(p => ({
+          id: p.id,
+          name: p.name,
+          color: p.color
+        })),
+        tasks: (tl.tasks||[]).map(t => ({
+          id: t.id,
+          phaseId: t.phaseId,
+          name: t.name,
+          owner: t.owner || "",
+          start: fmt(t.start),
+          end: fmt(t.end),
+          prog: clamp(parseInt(t.prog||0,10),0,100),
+          labelSide: t.labelSide || ""
+        }))
+      }))
+    }
+  };
+}
+
+
+  function normalizeLoadedState(obj){
+    const o = obj && typeof obj === "object" ? obj : {};
+    const meta = o.meta && typeof o.meta === "object" ? o.meta : {};
+    const ui   = o.ui && typeof o.ui === "object" ? o.ui : {};
+    const sec  = o.sections && typeof o.sections === "object" ? o.sections : {};
+    const data = o.data && typeof o.data === "object" ? o.data : {};
+
+    const schemaVersion = parseInt(meta.schemaVersion || meta.version || 0, 10) || 0;
+
+    // legacy: se non esistono timelines, le creiamo da phases/tasks...
+    let timelinesData = Array.isArray(data.timelines) ? data.timelines : null;
+    if(!timelinesData){
+      timelinesData = [{
+        id: uid("tl"),
+        suffix: "",
+        phases: Array.isArray(data.phases) ? data.phases : [],
+        tasks: Array.isArray(data.tasks) ? data.tasks : [],
+        milestones: Array.isArray(data.milestones) ? data.milestones : [],
+        markers: Array.isArray(data.markers) ? data.markers : []
+      }];
+    }
+
+    // SAL baseline legacy: baseline.tasks -> baseline.timelines[0].tasks
+    let salObj = data.sal && typeof data.sal === "object" ? data.sal : { baseline:null, entries:[] };
+    if(salObj.baseline && salObj.baseline.tasks && !salObj.baseline.timelines){
+      const firstId = timelinesData[0]?.id || uid("tl");
+      salObj.baseline = {
+        createdAtISO: salObj.baseline.createdAtISO || (new Date()).toISOString(),
+        timelines: [{
+          id: firstId,
+          tasks: (salObj.baseline.tasks||[]).map(x=>({ id:String(x.id||""), prog: clamp(parseInt(x.prog||0,10),0,100) }))
+        }]
+      };
+    }
+
+const loadedRisks = Array.isArray(data.riskEntries) ? data.riskEntries : [];
+
+
+    return {
+      meta:{
+        name: String(meta.name || ""),
+        savedAtISO: String(meta.savedAtISO || meta.savedAt || ""),
+        schemaVersion: schemaVersion || PROJECT_SCHEMA_VERSION,
+        appVersion: String(meta.appVersion || "")
+      },
+      ui:{
+        title: String(ui.title || ""),
+        startBound: String(ui.startBound || ""),
+        endBound: String(ui.endBound || ""),
+        rowH: parseInt(ui.rowH || 36, 10) || 36,
+        shadeWeekend: ui.shadeWeekend !== false,
+        showToday: ui.showToday !== false,
+        phaseBg: ui.phaseBg !== false,
+        progressStyle: String(ui.progressStyle || "tick"),
+        labelSide: String(ui.labelSide || "right"),
+        msInPhase: ui.msInPhase !== false,
+        kickoffDate: String(ui.kickoffDate || ""),
+        ownerRole: String(ui.ownerRole || ""),
+        clientName: String(ui.clientName || ""),
+        salDate: String(ui.salDate || ""),
+        activeTlId: String(ui.activeTlId || "")
+      },
+      sections:{
+  agenda: String(sec.agenda || ""),
+  purpose: String(sec.purpose || ""),
+  dlgsNotes: String(sec.dlgsNotes || ""),
+  context: String(sec.context || ""),
+  scope: String(sec.scope || ""),
+
+  stakeAcs: String(sec.stakeAcs || ""),
+  stakeClient: String(sec.stakeClient || ""),
+  governance: String(sec.governance || ""),
+
+  licTitle: String(sec.licTitle || "BOM Licenze"),
+  licText: String(sec.licText || ""),
+
+  matTitle: String(sec.matTitle || "BOM Materiali"),
+  matText: String(sec.matText || ""),
+
+  deliverables: String(sec.deliverables || ""),
+  prereq: String(sec.prereq || ""),
+  comms: String(sec.comms || ""),
+  collab: String(sec.collab || ""),
+
+  risks: String(sec.risks || ""),
+  outScope: String(sec.outScope || ""),
+  nextSteps: String(sec.nextSteps || "")
+},
+
+        data:{
+        timelines: timelinesData,
+        sal: salObj,
+        riskEntries: loadedRisks
+        }
+    };
+  }
+
+  function loadState(rawObj){
+    const S = normalizeLoadedState(rawObj);
+    const U = S.ui, D = S.data, X = S.sections;
+
+    riskEntries.length = 0;
+    (D.riskEntries || []).forEach(r=>{
+    riskEntries.push({
+        id: String(r.id || uid("risk")),
+        desc: String(r.desc || ""),
+        owner: String(r.owner || ""),
+        prob: clamp(parseInt(r.prob||3,10),1,5),
+        sev: clamp(parseInt(r.sev||3,10),1,5),
+        mit: String(r.mit || "")
+    });
+    });
+    rebuildRisksTable();
+    clearRiskForm();
+
+
+    titleInp.value=U.title||'';
+    startBound.value=U.startBound||'';
+    endBound.value=U.endBound||'';
+    rowHRange.value=String(U.rowH||36); rowHVal.textContent=rowHRange.value;
+
+    shadeWeekend.checked=!!U.shadeWeekend;
+    showToday.checked=!!U.showToday;
+    phaseBg.checked=!!U.phaseBg;
+    progressStyle.value=U.progressStyle||'tick';
+    labelSideSel.value=U.labelSide||'right';
+    msInPhase.checked=!!U.msInPhase;
+
+    kickoffDate.value = U.kickoffDate || '';
+    ownerRole.value = U.ownerRole || '';
+    clientName.value = U.clientName || '';
+    if(outOwner) outOwner.textContent = (ownerRole.value || "Nome Cognome — Ruolo");
+    salDateInp.value = U.salDate || "";
+
+    agenda.value = X.agenda||'';
+    purpose.value = X.purpose||'';
+    stakeAcs.value = X.stakeAcs||'';
+    stakeClient.value = X.stakeClient||'';
+    licTitle.value = X.licTitle || 'Licenze Necessarie';
+    licText.value = X.licText || '';
+    matTitle.value = X.matTitle || 'Materiale Necessario';
+    matText.value = X.matText || '';
+    prereq.value = X.prereq||'';
+    comms.value = X.comms||'';
+    collab.value = X.collab||'';
+    if(context) context.value = X.context || '';
+if(scope) scope.value = X.scope || '';
+
+if(governance) governance.value = X.governance || '';
+if(dlgsNotes) dlgsNotes.value = X.dlgsNotes || '';
+
+if(deliverables) deliverables.value = X.deliverables || '';
+
+if(risks) risks.value = X.risks || '';
+if(outScope) outScope.value = X.outScope || '';
+if(nextSteps) nextSteps.value = X.nextSteps || '';
+
+
+    timelines.length = 0;
+
+    
+    (D.timelines||[]).forEach(tl=>{
+  const T = makeEmptyTimeline();
+  T.id = String(tl.id || uid("tl"));
+  T.suffix = String(tl.suffix || "");
+
+  (tl.phases||[]).forEach(p=>{
+    T.phases.push({
+      id: String(p.id || uid("ph")),
+      name: String(p.name || ""),
+      color: String(p.color || "#64748b")
+    });
+  });
+
+  (tl.tasks||[]).forEach(t=>{
+    const s = toDate(t.start), e = toDate(t.end);
+    if(!s || !e) return;
+    T.tasks.push({
+      id: String(t.id || uid("t")),
+      phaseId: String(t.phaseId || ""),
+      name: String(t.name || ""),
+      owner: String(t.owner || ""),
+      start: s,
+      end: e,
+      prog: clamp(parseInt(t.prog||0,10),0,100),
+      labelSide: String(t.labelSide || "")
+    });
+  });
+
+  (tl.milestones||[]).forEach(m=>{
+    const d = toDate(m.date);
+    if(!d) return;
+    T.milestones.push({
+      id: String(m.id || uid("m")),
+      name: String(m.name || ""),
+      date: d,
+      phaseId: String(m.phaseId || ""),
+      yOffset: parseInt(m.yOffset||0,10) || 0
+    });
+  });
+
+  (tl.markers||[]).forEach(k=>{
+    const d = toDate(k.date);
+    if(!d) return;
+    T.markers.push({
+      id: String(k.id || uid("k")),
+      label: String(k.label || ""),
+      date: d
+    });
+  });
+
+  timelines.push(T);
+});
+
+
+    activeTlId = (U.activeTlId && timelines.some(t=>t.id===U.activeTlId)) ? U.activeTlId : (timelines[0]?.id || "");
+    bindTL();
+    rebuildTimelineSelect();
+    switchTimeline(activeTlId);
+
+    // SAL
+    salBaseline = null;
+    salEntries.length = 0;
+    salSelectedId = "";
+    const SAL = (D.sal||{});
+    if(SAL.baseline && Array.isArray(SAL.baseline.timelines)){
+      salBaseline = {
+        createdAtISO: String(SAL.baseline.createdAtISO || (new Date()).toISOString()),
+        timelines: SAL.baseline.timelines.map(tl=>({
+          id: String(tl.id||""),
+          tasks: (tl.tasks||[]).map(x=>({ id:String(x.id||""), prog:clamp(parseInt(x.prog||0,10),0,100) }))
+        }))
+      };
+    }
+    if(Array.isArray(SAL.entries)){
+      SAL.entries.forEach(e=>{
+        salEntries.push({
+          id: String(e.id || ("sal_"+Date.now()+"_"+Math.random().toString(16).slice(2))),
+          dateLabel: String(e.dateLabel || ""),
+          createdAtISO: String(e.createdAtISO || (new Date()).toISOString()),
+          updatedAtISO: String(e.updatedAtISO || ""),
+          issuesText: String(e.issuesText || ""),
+          notesText: String(e.notesText || ""),
+          snapshot: e.snapshot && Array.isArray(e.snapshot.timelines) ? e.snapshot : { timelines: [] }
+        });
+      });
+    }
+
+    redrawSalTable();
+    salIssues.value = "";
+    salNotes.value = "";
+
+    if(!(agenda.value||"").trim()){
+      syncAgendaWithSalSmart();
+    }
+
+    render();
+  }
+
+  async function saveProjectFile(){
+    persistSalEdits();
+
+    const defaultName = (titleInp.value||"").trim() || "progetto";
+    const name = (prompt("Nome file progetto:", defaultName) || "").trim();
+    if(!name) return;
+
+    const data = serializeState(name);
+    const json = JSON.stringify(data, null, 2);
+    const suggested = safeName(name) + ".gantt.json";
+
+    if(window.showSaveFilePicker){
+      try{
+        const handle = await window.showSaveFilePicker({
+          suggestedName: suggested,
+          types: [{ description: "Gantt Project JSON", accept: { "application/json": [".json"] } }]
+        });
+        const writable = await handle.createWritable();
+        await writable.write(json);
+        await writable.close();
+        return;
+      }catch(e){
+        if(e && e.name === "AbortError") return;
+        console.error(e);
+      }
+    }
+
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob([json],{type:"application/json"}));
+    a.download=suggested;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+  saveAllBtn.onclick = saveProjectFile;
+
+  restoreBtn.onclick = ()=> restoreFile.click();
+  restoreFile.onchange = ()=>{
+    const f=restoreFile.files[0]; if(!f) return;
+    f.text().then(txt=>{
+      try{
+        const cleaned = String(txt||"").replace(/^\uFEFF/, "").trim();
+        const obj=JSON.parse(cleaned);
+        loadState(obj);
+      }catch(e){
+        console.error(e);
+        alert("File non valido.");
+      }finally{
+        restoreFile.value = "";
+      }
+    });
+  };
+
+  /* ========== Clear & Reset ========== */
+  function clearAll(){
+    persistSalEdits();
+
+    // mantieni 1 timeline vuota
+    timelines.length = 0;
+    const tl = makeEmptyTimeline();
+    timelines.push(tl);
+    activeTlId = tl.id;
+    bindTL();
+
+    phases.length=0; tasks.length=0; milestones.length=0; markers.length=0;
+
+    salBaseline = null;
+    salEntries.length = 0;
+    salSelectedId = "";
+    redrawSalTable();
+    salIssues.value=""; salNotes.value="";
+
+    agenda.value=""; purpose.value=""; stakeAcs.value=""; stakeClient.value="";
+    licTitle.value="BOM Licenze";
+    matTitle.value="BOM Materiali";
+    prereq.value=""; comms.value=""; collab.value="";
+
+    titleInp.value="";
+    kickoffDate.value="";
+    ownerRole.value="";
+    clientName.value="";
+    startBound.value=""; endBound.value="";
+    phaseName.value="";
+    taskName.value=""; taskOwner.value=""; taskStart.value=""; taskEnd.value=""; taskProg.value="0";
+    msName.value=""; msDate.value="";
+    mkLabel.value=""; mkDate.value="";
+    
+    if(context) context.value="";
+if(scope) scope.value="";
+if(governance) governance.value="";
+if(dlgsNotes) dlgsNotes.value="";
+
+if(deliverables) deliverables.value="";
+if(risks) risks.value="";
+if(outScope) outScope.value="";
+if(nextSteps) nextSteps.value="";
+
+
+    syncAgendaWithSalSmart();
+
+    rebuildTimelineSelect();
+    redrawPhaseTable(); refreshPhaseSelects();
+    rebuildTasksTable();
+    msBody.innerHTML=""; mkBody.innerHTML="";
+
+    render();
+  }
+  clearBtn.onclick = clearAll;
+
+  /* ========== Layout milestone non-overlap ========== */
+  function layoutNonOverlap(items, xOf, wOf, minGap){
+    const lanes=[];
+    const sorted=items.slice().sort((a,b)=>xOf(a)-xOf(b));
+    const placed=[];
+    for(const it of sorted){
+      const x=xOf(it), w=wOf(it);
+      const left=x - w, right=x + 6;
+      let lane=0;
+      while(true){
+        if(lanes[lane]==null || left - lanes[lane] >= minGap){
+          lanes[lane]=right;
+          placed.push({item:it, lane});
+          break;
+        }
+        lane++;
+      }
+    }
+    return {placed, lanesCount:lanes.length};
+  }
+
+  /* ========== SVG export “pro” (e base raster PPT) ========== */
+  function serializeSvgForExport(svgEl){
+    const clone = svgEl.cloneNode(true);
+
+    clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    clone.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+    clone.setAttribute("shape-rendering", "geometricPrecision");
+    clone.setAttribute("text-rendering", "geometricPrecision");
+
+    const w = parseFloat(clone.getAttribute("width") || "0");
+    const h = parseFloat(clone.getAttribute("height") || "0");
+    if(w && h && !clone.getAttribute("viewBox")){
+      clone.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    }
+
+    const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    bg.setAttribute("x", "0");
+    bg.setAttribute("y", "0");
+    bg.setAttribute("width", "100%");
+    bg.setAttribute("height", "100%");
+    bg.setAttribute("fill", "#ffffff");
+    clone.insertBefore(bg, clone.firstChild);
+
+    const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
+    style.textContent = `
+      text { font-family: Calibri, Arial, sans-serif; }
+      line, polyline, path, rect { vector-effect: non-scaling-stroke; }
+    `;
+
+    const defs = clone.querySelector("defs");
+    if(defs && defs.parentNode){
+      defs.parentNode.insertBefore(style, defs.nextSibling);
+    } else {
+      clone.insertBefore(style, clone.firstChild);
+    }
+
+    const xml = new XMLSerializer().serializeToString(clone);
+    return `<?xml version="1.0" encoding="UTF-8"?>\n${xml}`;
+  }
+
+  exportSvgBtn.onclick=downloadSvg;
+  function downloadSvg(){
+    const xml = serializeSvgForExport(svg);
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob([xml],{type:"image/svg+xml;charset=utf-8"}));
+    a.download="gantt.svg";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  /* ========== PNG export ========== */
+  exportPngBtn.onclick=async ()=>{
+    const png = await svgToPngDataUrl(svg, lastSVGWidth, lastSVGHeight, 2);
+    if(!png){ alert("Impossibile esportare PNG"); return; }
+    const a=document.createElement("a");
+    const blob = dataURLToBlob(png);
+    a.href=URL.createObjectURL(blob);
+    a.download="gantt.png";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  async function svgToPngDataUrl(svgEl, w, h, scale){
+    try{
+      if(document.fonts && document.fonts.ready){
+        try{ await document.fonts.ready; }catch(_){}
+      }
+
+      const MAX_CANVAS = 8192;
+      const maxSide = Math.max(w, h);
+      const effScale = Math.max(1, Math.min(scale || 1, MAX_CANVAS / maxSide));
+
+      const xml = serializeSvgForExport(svgEl);
+      const svgBlob = new Blob([xml],{type:"image/svg+xml;charset=utf-8"});
+      const url = URL.createObjectURL(svgBlob);
+
+      const img = new Image();
+      img.decoding = "sync";
+      await new Promise((res, rej)=>{
+        img.onload=()=>res(true);
+        img.onerror=()=>rej(new Error("img load fail"));
+        img.src=url;
+      });
+
+      const c=document.createElement("canvas");
+      c.width = Math.round(w*effScale);
+      c.height = Math.round(h*effScale);
+
+      const cx = c.getContext("2d");
+      cx.setTransform(effScale,0,0,effScale,0,0);
+      cx.imageSmoothingEnabled = true;
+      try{ cx.imageSmoothingQuality = "high"; }catch(_){}
+
+      cx.fillStyle="#fff";
+      cx.fillRect(0,0,w,h);
+      cx.drawImage(img,0,0,w,h);
+
+      URL.revokeObjectURL(url);
+      return c.toDataURL("image/png");
+    }catch(e){
+      console.error(e);
+      return null;
+    }
+  }
+
+  function dataURLToBlob(dataURL){
+    const parts = dataURL.split(",");
+    const meta = parts[0] || "";
+    const b64 = parts[1] || "";
+    const mime = (meta.match(/data:(.*?);base64/)||[])[1] || "application/octet-stream";
+    const bin = atob(b64);
+    const arr = new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+    return new Blob([arr],{type:mime});
+  }
+
+  async function svgToPngForPpt(svgEl, svgW, svgH, boxWIn, boxHIn, dpi){
+    if(document.fonts && document.fonts.ready){
+      try{ await document.fonts.ready; }catch(_){}
+    }
+
+    const MAX_CANVAS = 8192;
+    const targetWpx = Math.round(boxWIn * (dpi||300));
+    const targetHpx = Math.round(boxHIn * (dpi||300));
+
+    const scaleW = targetWpx / svgW;
+    const scaleH = targetHpx / svgH;
+    let scale = Math.min(scaleW, scaleH);
+
+    const maxScaleByCanvas = MAX_CANVAS / Math.max(svgW, svgH);
+    scale = Math.max(1, Math.min(scale, maxScaleByCanvas));
+
+    return await svgToPngDataUrl(svgEl, svgW, svgH, scale);
+  }
+
+  /* ========== PPTX helpers ========== */
+  const SLIDE_W = 13.333;
+  const SLIDE_H = 7.5;
+
+  function addBg(slide, dataUrl){
+    if(!dataUrl) return;
+    slide.addImage({ data: dataUrl, x:0, y:0, w:SLIDE_W, h:SLIDE_H });
+  }
+
+  function addAcsTitle(slide, title, THEME){
+    slide.addText(title, {
+      x: THEME.marginX + 0.9,
+      y: 1.05 - 0.87,
+      w: 12.0 - 0.9,
+      h: 0.6,
+      fontFace: "Eagle Light",
+      fontSize: 20,
+      color: "0F172A"
+    });
+  }
+
+  function addAcsBullets(slide, lines, THEME, bodyXOverride){
+    const safe = (lines && lines.length) ? lines : ["—"];
+    slide.addText(safe.join("\n"), {
+      x: bodyXOverride ?? THEME.marginX,
+      y: 1.75,
+      w: 12.0,
+      h: 5.2,
+      fontFace: THEME.fontBody,
+      fontSize: THEME.bodySize,
+      color: "0F172A",
+      valign: "top",
+      breakLine: true,
+      bullet: { indent: 24 }
+    });
+  }
+
+  function addAcsBody(slide, bodyText, THEME){
+    const text = String(bodyText||"").trim() || "—";
+    slide.addText(text, {
+      x: THEME.marginX, y: 1.75, w: 12.0, h: 5.2,
+      fontFace: THEME.fontBody, fontSize: THEME.bodySize, color: "0F172A",
+      valign: "top",
+      breakLine: true
+    });
+  }
+
+  function addAcsBulletsSlide(pptx, bg, title, lines, THEME, bodyXOverride){
+    const s = pptx.addSlide();
+    addBg(s, bg);
+    if(!bg) s.background = { color:"FFFFFF" };
+    addAcsTitle(s, title, THEME);
+    addAcsBullets(s, lines, THEME, bodyXOverride);
+  }
+
+  function addAcsTitleBodySlide(pptx, bg, title, body, THEME){
+    const s = pptx.addSlide();
+    addBg(s, bg);
+    if(!bg) s.background = { color:"FFFFFF" };
+    addAcsTitle(s, title, THEME);
+    addAcsBody(s, body, THEME);
+  }
+
+  function computeSalProgressLines(entry, tl){
+    const baseTl = (salBaseline?.timelines || []).find(x=>x.id===tl.id);
+    const baseMap = new Map();
+    (baseTl?.tasks || []).forEach(x=> baseMap.set(x.id, clamp(parseInt(x.prog||0,10),0,100)));
+
+    const idx = salEntries.findIndex(e=>e.id===entry.id);
+    const prev = (idx>0) ? salEntries[idx-1] : null;
+
+    const prevTl = (prev?.snapshot?.timelines || []).find(x=>x.id===tl.id);
+    const prevMap = new Map();
+    (prevTl?.tasks || []).forEach(t=> prevMap.set(t.id, clamp(parseInt(t.prog||0,10),0,100)));
+
+    const curTl = (entry?.snapshot?.timelines || []).find(x=>x.id===tl.id);
+    const curMap = new Map();
+    (curTl?.tasks || []).forEach(t=> curMap.set(t.id, clamp(parseInt(t.prog||0,10),0,100)));
+
+    const lines = [];
+    let sumCur=0, sumBase=0, sumPrev=0, n=0;
+
+    (tl.tasks||[]).forEach(t=>{
+      const cur = curMap.has(t.id) ? curMap.get(t.id) : clamp(parseInt(t.prog||0,10),0,100);
+      const base = baseMap.has(t.id) ? baseMap.get(t.id) : 0;
+      const prevP = prev ? (prevMap.has(t.id) ? prevMap.get(t.id) : 0) : null;
+
+      const dBase = cur - base;
+      const dPrev = prev ? (cur - (prevP==null?0:prevP)) : null;
+
+      const tagPrev = prev ? `Δprev ${dPrev>=0?"+":""}${dPrev}%` : "Δprev —";
+      const tagBase = `Δbase ${dBase>=0?"+":""}${dBase}%`;
+
+      lines.push(`• ${t.name}: ${cur}%  (${tagPrev}, ${tagBase})`);
+
+      sumCur += cur;
+      sumBase += base;
+      sumPrev += (prev ? (prevP==null?0:prevP) : 0);
+      n++;
+    });
+
+    const avgCur = n? Math.round(sumCur/n) : 0;
+    const avgBase = n? Math.round(sumBase/n) : 0;
+    const avgPrev = (prev && n)? Math.round(sumPrev/n) : null;
+
+    const header = [];
+    header.push(`Sintesi avanzamento (media): ${avgCur}%`);
+    header.push(`Δbase: ${(avgCur-avgBase)>=0?"+":""}${avgCur-avgBase}%`);
+    header.push(`Δprev: ${prev ? ((avgCur-(avgPrev||0))>=0?"+":"")+(avgCur-(avgPrev||0))+"%" : "—"}`);
+
+    return { header, lines };
+  }
+
+function computeSalProgressTable(entry, tl){
+  const baseTl = (salBaseline?.timelines || []).find(x=>x.id===tl.id);
+  const baseMap = new Map();
+  (baseTl?.tasks || []).forEach(x=> baseMap.set(x.id, clamp(parseInt(x.prog||0,10),0,100)));
+
+  const idx = salEntries.findIndex(e=>e.id===entry.id);
+  const prev = (idx>0) ? salEntries[idx-1] : null;
+
+  const prevTl = (prev?.snapshot?.timelines || []).find(x=>x.id===tl.id);
+  const prevMap = new Map();
+  (prevTl?.tasks || []).forEach(t=> prevMap.set(t.id, clamp(parseInt(t.prog||0,10),0,100)));
+
+  const curTl = (entry?.snapshot?.timelines || []).find(x=>x.id===tl.id);
+  const curMap = new Map();
+  (curTl?.tasks || []).forEach(t=> curMap.set(t.id, clamp(parseInt(t.prog||0,10),0,100)));
+
+  // KPI (media)
+  let sumCur=0, sumBase=0, sumPrev=0, n=0;
+
+  // Righe tabella
+  const rows = [];
+
+  // (opzionale) ordinamento più “presentabile”: per fase, poi per start date
+  const phaseOrder = new Map((tl.phases||[]).map((p,i)=>[p.id,i]));
+  const sortedTasks = (tl.tasks||[]).slice().sort((a,b)=>{
+    const pa = phaseOrder.has(a.phaseId) ? phaseOrder.get(a.phaseId) : 9999;
+    const pb = phaseOrder.has(b.phaseId) ? phaseOrder.get(b.phaseId) : 9999;
+    if(pa !== pb) return pa - pb;
+    return (a.start?.getTime?.()||0) - (b.start?.getTime?.()||0);
+  });
+
+  sortedTasks.forEach(t=>{
+    const cur  = curMap.has(t.id)  ? curMap.get(t.id)  : clamp(parseInt(t.prog||0,10),0,100);
+    const base = baseMap.has(t.id) ? baseMap.get(t.id) : 0;
+    const prevP = prev ? (prevMap.has(t.id) ? prevMap.get(t.id) : 0) : null;
+
+    const dBase = cur - base;
+    const dPrev = prev ? (cur - (prevP==null?0:prevP)) : null;
+
+    rows.push({
+      name: t.name,
+      cur,
+      dPrev,
+      dBase
+    });
+
+    sumCur += cur;
+    sumBase += base;
+    sumPrev += (prev ? (prevP==null?0:prevP) : 0);
+    n++;
+  });
+
+  const avgCur  = n ? Math.round(sumCur/n) : 0;
+  const avgBase = n ? Math.round(sumBase/n) : 0;
+  const avgPrev = (prev && n) ? Math.round(sumPrev/n) : null;
+
+  return {
+    hasPrev: !!prev,
+    kpi: {
+      avgCur,
+      dBase: avgCur - avgBase,
+      dPrev: prev ? (avgCur - (avgPrev||0)) : null
+    },
+    rows
+  };
+}
+
+function fmtDelta(d, has){
+  if(!has || d==null) return "—";
+  if(d===0) return "0%";
+  return (d>0?"+":"") + d + "%";
+}
+function fmtPct(v){ return String(v||0) + "%"; }
+
+function deltaColor(d, has){
+  if(!has || d==null) return "5A6283";   // muted
+  if(d>0) return "16A34A";              // green
+  if(d<0) return "DC2626";              // red
+  return "334155";                      // neutral
+}
+
+function stripPhasePrefix(name){
+  // Se l'utente scrive già "FASE 1 — ..." lo togliamo per evitare duplicazioni
+  return String(name||"").replace(/^FASE\s*\d+\s*[—-]\s*/i, "").trim();
+}
+
+// ===== NEW: Gantt scritto tabellare (stile immagine) =====
+function fmtIT(d){
+  // dd/mm/yyyy in UTC
+  if(!d) return "";
+  const dd = String(d.getUTCDate()).padStart(2,"0");
+  const mm = String(d.getUTCMonth()+1).padStart(2,"0");
+  const yy = d.getUTCFullYear();
+  return `${dd}/${mm}/${yy}`;
+}
+
+function buildTimelineBar(start, end, minD, maxD, widthChars){
+  // Mini “timeline” SOLO ASCII, robusta in PPT (niente glifi strani)
+  const W = Math.max(14, Math.min(32, widthChars || 22));
+  const total = Math.max(1, diffDays(minD, maxD) + 1);
+
+  const off = clamp(diffDays(minD, start), 0, total - 1);
+  const dur = clamp(diffDays(start, end) + 1, 1, total);
+
+  const offC = Math.round((off / total) * W);
+  const durC = Math.max(1, Math.round((dur / total) * W));
+
+  // baseline '.' + barra '=' con estremi '|'
+  const arr = Array.from({ length: W }, () => ".");
+
+  for(let i=0; i<durC; i++){
+    const p = offC + i;
+    if(p >= 0 && p < W) arr[p] = "=";
+  }
+
+  if(offC >= 0 && offC < W) arr[offC] = "|";
+  const endC = clamp(offC + durC - 1, 0, W - 1);
+  if(endC >= 0 && endC < W) arr[endC] = "|";
+
+  return arr.join("");
+}
+
+
+function buildWrittenGanttRows(tl){
+  // Costruisce righe: [faseId, fase, task, dal, al, durata, timeline]
+  const allDates = [];
+  (tl.tasks||[]).forEach(t=>{ if(t.start && t.end){ allDates.push(t.start, t.end); } });
+  (tl.milestones||[]).forEach(m=>{ if(m.date) allDates.push(m.date); });
+  (tl.markers||[]).forEach(k=>{ if(k.date) allDates.push(k.date); });
+
+  // fallback se vuoto
+  if(!allDates.length){
+    return {
+      header: ["fase id","Fase","task","dal","al","durata gg","timeline"],
+      rows: [["—","—","—","—","—","—","—"]],
+      minD: null, maxD: null
+    };
+  }
+
+  let minD = new Date(Math.min(...allDates.map(d=>d.getTime())));
+  let maxD = new Date(Math.max(...allDates.map(d=>d.getTime())));
+  // un minimo di margine per far “respirare” la barra
+  minD = shift(minD, -1);
+  maxD = shift(maxD,  1);
+
+  const phaseOrder = (tl.phases||[]);
+  const phaseMapIdx = new Map(phaseOrder.map((p,i)=>[p.id,i]));
+
+  // tasks ordinati: per fase, poi start
+  const tasksSorted = (tl.tasks||[]).slice().sort((a,b)=>{
+    const pa = phaseMapIdx.has(a.phaseId) ? phaseMapIdx.get(a.phaseId) : 9999;
+    const pb = phaseMapIdx.has(b.phaseId) ? phaseMapIdx.get(b.phaseId) : 9999;
+    if(pa!==pb) return pa-pb;
+    return (a.start?.getTime?.()||0)-(b.start?.getTime?.()||0);
+  });
+
+  const header = ["fase id","Fase","task","dal","al","durata gg","timeline"];
+  const rows = [];
+
+  tasksSorted.forEach(t=>{
+    const phIdx = phaseMapIdx.has(t.phaseId) ? phaseMapIdx.get(t.phaseId) : null;
+    const ph = (phIdx!=null) ? phaseOrder[phIdx] : null;
+
+    const faseId = (phIdx!=null) ? String(phIdx+1) : "—";
+    const faseName = ph ? (stripPhasePrefix(ph.name) || ph.name) : "—";
+
+    const dal = t.start ? fmtIT(t.start) : "—";
+    const al  = t.end   ? fmtIT(t.end)   : "—";
+    const dur = (t.start && t.end) ? String(diffDays(t.start,t.end)+1) : "—";
+
+    const bar = (t.start && t.end) ? buildTimelineBar(t.start, t.end, minD, maxD, 22) : "—";
+
+    rows.push([faseId, faseName, String(t.name||"—"), dal, al, dur, bar]);
+  });
+
+  if(!rows.length){
+    rows.push(["—","—","(nessun task)","—","—","—","—"]);
+  }
+
+  return { header, rows, minD, maxD };
+}
+
+function addWrittenGanttSlides(pptx, bg, baseTitle, tl, THEME){
+  const built = buildWrittenGanttRows(tl);
+
+  // paginazione: 10-12 righe comode in 16:9
+  const PAGE_SIZE = 11;
+  const pages = [];
+  for(let i=0;i<built.rows.length;i+=PAGE_SIZE) pages.push(built.rows.slice(i,i+PAGE_SIZE));
+  if(!pages.length) pages.push([["—","—","—","—","—","—","—"]]);
+
+  pages.forEach((chunk, pi)=>{
+    const s = pptx.addSlide();
+    addBg(s, bg);
+    if(!bg) s.background = { color:"FFFFFF" };
+
+    const title = pages.length>1 ? `${baseTitle} (${pi+1}/${pages.length})` : baseTitle;
+    addAcsTitle(s, title, THEME);
+
+    // Tabella
+    const x = THEME.marginX;
+    const y = 1.75;
+    const w = SLIDE_W - 2*THEME.marginX;
+    const h = 5.55;
+
+    // Header + body
+    const data = [built.header].concat(chunk);
+// Evita doppia barra nella cella tabella: lasciamo la colonna timeline vuota
+const dataNoBar = data.map((row, i) => {
+  if(i === 0) return row;                // header
+  const r = row.slice();
+  r[6] = "";                             // colonna timeline vuota
+  return r;
+});
+
+    // Colonne proporzionate per stare “top” e leggibili
+    // (timeline monospace: usiamo Courier New per barra)
+    s.addTable(dataNoBar, {
+      x, y, w, h,
+      fontFace: THEME.fontBody,
+      fontSize: 10,
+      color: "0F172A",
+      border: { type:"solid", color:"E2E8F0", pt: 1 },
+      fill: "FFFFFF",
+      valign: "middle",
+      colW: [
+        0.65,         // fase id
+        w*0.20,       // fase
+        w*0.34,       // task
+        w*0.10,       // dal
+        w*0.10,       // al
+        0.85,         // durata gg
+        w*0.16        // timeline
+      ],
+      rowH: 0.28
+    });
+
+    // “hack” leggibilità timeline: overlay testo monospace sulla colonna timeline (ultima colonna)
+    // (addTable non permette font diversi per colonna, quindi scriviamo sopra solo la colonna timeline)
+    const rowsY0 = y + 0.28; // prima riga dopo header
+    const rowH = 0.28;
+
+    const tlX = x + (0.65 + (w*0.20) + (w*0.34) + (w*0.10) + (w*0.10) + 0.85); // somma colW precedenti
+    const tlW = w*0.16;
+
+    chunk.forEach((r, ri)=>{
+      const bar = String(r[6]||"");
+      s.addText(bar, {
+        x: tlX + 0.08,
+        y: rowsY0 + ri*rowH + 0.03,
+        w: tlW - 0.16,
+        h: rowH,
+        fontFace: "Courier New",
+        fontSize: 10,
+        color: "334155",
+        valign: "middle"
+      });
+    });
+
+    // Nota sotto (come nell’immagine: timeline “indicativa”)
+    const rangeTxt = (built.minD && built.maxD) ? `${fmtIT(built.minD)} → ${fmtIT(built.maxD)}` : "";
+    s.addText(
+      `Nota: timeline indicativa (non in scala). Range: ${rangeTxt}`,
+      {
+        x: THEME.marginX,
+        y: SLIDE_H - 0.45,
+        w: SLIDE_W - 2*THEME.marginX,
+        h: 0.35,
+        fontFace: THEME.fontBody,
+        fontSize: 10,
+        color: "5A6283",
+        align: "center",
+        valign: "middle"
+      }
+    );
+  });
+}
+
+
+function buildTimelineNarrativeLines(tl){
+  const lines = [];
+
+  // Ordini per fase (come in UI)
+  const byPhaseTasks = new Map();
+  (tl.phases||[]).forEach(p => byPhaseTasks.set(p.id, []));
+  (tl.tasks||[]).forEach(t=>{
+    if(!byPhaseTasks.has(t.phaseId)) byPhaseTasks.set(t.phaseId, []);
+    byPhaseTasks.get(t.phaseId).push(t);
+  });
+  for(const arr of byPhaseTasks.values()){
+    arr.sort((a,b)=>(a.start?.getTime?.()||0)-(b.start?.getTime?.()||0));
+  }
+
+  const byPhaseMs = new Map();
+  (tl.phases||[]).forEach(p => byPhaseMs.set(p.id, []));
+  (tl.milestones||[]).forEach(m=>{
+    const pid = m.phaseId || "";
+    if(!byPhaseMs.has(pid)) byPhaseMs.set(pid, []);
+    byPhaseMs.get(pid).push(m);
+  });
+  for(const arr of byPhaseMs.values()){
+    arr.sort((a,b)=>(a.date?.getTime?.()||0)-(b.date?.getTime?.()||0));
+  }
+
+  (tl.phases||[]).forEach((ph, idx)=>{
+    const phName = stripPhasePrefix(ph.name) || ph.name || "";
+    lines.push(`FASE ${idx+1} — ${phName}`);          // UNA SOLA volta
+    lines.push("");                                   // spazio
+
+    const tlist = byPhaseTasks.get(ph.id) || [];
+    if(!tlist.length){
+      lines.push("• (nessun task)");
+    }else{
+      tlist.forEach(t=>{
+        const dur = (t.start && t.end) ? (diffDays(t.start,t.end)+1) : 0;
+        const prog = clamp(parseInt(t.prog||0,10),0,100);
+        // Riga singola, leggibile, senza etichette
+        lines.push(`• ${t.name} | ${fmt(t.start)} → ${fmt(t.end)} | ${dur}g`);
+
+      });
+    }
+
+    const mlist = byPhaseMs.get(ph.id) || [];
+    if(mlist.length){
+      lines.push("");
+      lines.push("Milestone:");
+      mlist.forEach(m=>{
+        lines.push(`◆ ${m.name} — ${fmt(m.date)}`);
+      });
+    }
+
+    lines.push(""); // separatore tra fasi
+  });
+
+  // Milestone senza fase
+  const msNoPhase = (tl.milestones||[]).filter(m=>!m.phaseId);
+  if(msNoPhase.length){
+    lines.push("Milestone (senza fase):");
+    msNoPhase
+      .slice()
+      .sort((a,b)=>(a.date?.getTime?.()||0)-(b.date?.getTime?.()||0))
+      .forEach(m=> lines.push(`◆ ${m.name} — ${fmt(m.date)}`));
+    lines.push("");
+  }
+
+  // Linee verticali
+  const mk = (tl.markers||[])
+    .slice()
+    .sort((a,b)=>(a.date?.getTime?.()||0)-(b.date?.getTime?.()||0));
+  if(mk.length){
+    lines.push("Linee verticali:");
+    mk.forEach(x=> lines.push(`| ${x.label} — ${fmt(x.date)}`));
+  }
+
+  // Pulizia righe finali
+  while(lines.length && !String(lines[lines.length-1]).trim()) lines.pop();
+
+  return lines.length ? lines : ["—"];
+}
+
+/*function addTimelineNarrativeSlide(pptx, bg, title, tl, THEME, globalLabelSide){
+  const s = pptx.addSlide();
+  addBg(s, bg);
+  if(!bg) s.background = { color:"FFFFFF" };
+
+  addAcsTitle(s, title, THEME);
+
+  const built = buildTimelineNarrative(tl, globalLabelSide);
+  s.addText(built.text, {
+    x: THEME.marginX,
+    y: 1.65,
+    w: SLIDE_W - 2*THEME.marginX,
+    h: SLIDE_H - 2.05,
+    fontFace: THEME.fontBody,
+    fontSize: built.fontSize,
+    color: "0F172A",
+    valign: "top",
+    breakLine: true
+  });
+}*/
+
+function addPageIndicator(slide, pageIndex, pageTotal, THEME){
+  if(pageTotal <= 1) return;
+  slide.addText(`${pageIndex}/${pageTotal}`, {
+    x: THEME.marginX,          // ← SINISTRA, stessa colonna dei contenuti
+    y: SLIDE_H - 0.35,         // ← STESSA ALTEZZA DI PRIMA
+    w: 0.6,
+    h: 0.25,
+    fontFace: THEME.fontBody,
+    fontSize: 10,
+    color: "94A3B8",
+    align: "left",             // ← ALLINEAMENTO A SINISTRA
+    valign: "middle"
+  });
+}
+
+
+// Heuristica robusta (meglio “stare larghi” che tagliare testo)
+function maxLinesForBox(fontSize){
+  // tarato per box tipico (y~1.75, h~5.2). Se cambi layout, resta comunque “safe”.
+  if(fontSize >= 18) return 14;
+  if(fontSize >= 16) return 16;
+  if(fontSize >= 14) return 19;
+  if(fontSize >= 12) return 24;
+  if(fontSize >= 11) return 26;
+  if(fontSize >= 10) return 30;
+  return 34; // 9 o meno
+}
+
+// Non “rompe” titoli: li ripete uguali; spezza solo contenuto.
+// Evita inoltre di lasciare un heading come ultima riga (es. "FASE 2 — ...")
+function paginateLinesSmart(lines, maxLines){
+  const L = (lines||[]).map(x=>String(x||""));
+  const pages = [];
+  let i = 0;
+
+  const isHeading = (s)=>{
+    const t = String(s||"").trim();
+    // Headings che vogliamo proteggere (non lasciarli soli in fondo)
+    return /^FASE\s+\d+\s+—/i.test(t) || /^Milestone\b/i.test(t) || /^Linee verticali\b/i.test(t);
+  };
+
+  while(i < L.length){
+    let end = Math.min(i + maxLines, L.length);
+
+    // Se l'ultima riga è un heading, spostalo nella pagina successiva
+    while(end > i + 1 && isHeading(L[end-1])) end--;
+
+    // Se la prima riga della pagina è vuota, saltala
+    while(i < end && !L[i].trim()) i++;
+
+    const chunk = L.slice(i, end);
+
+    // trim vuoti a fine pagina
+    while(chunk.length && !chunk[chunk.length-1].trim()) chunk.pop();
+
+    if(chunk.length) pages.push(chunk);
+
+    i = end;
+  }
+
+  return pages.length ? pages : [["—"]];
+}
+
+function addPagedTextSlides(pptx, bg, title, lines, THEME, opts){
+  const o = opts || {};
+  const fontSize = o.fontSize || THEME.bodySize;
+  const isBullet = !!o.bullets;
+
+  const boxX = (o.x != null) ? o.x : THEME.marginX;
+  const boxY = (o.y != null) ? o.y : 1.75;
+  const boxW = (o.w != null) ? o.w : 12.0;
+  const boxH = (o.h != null) ? o.h : 5.2;
+
+  const maxLines = o.maxLines || maxLinesForBox(fontSize);
+  const pages = paginateLinesSmart(lines, maxLines);
+
+  pages.forEach((pageLines, idx)=>{
+    const s = pptx.addSlide();
+    addBg(s, bg);
+    if(!bg) s.background = { color:"FFFFFF" };
+
+    addAcsTitle(s, title, THEME);
+
+    s.addText(pageLines.join("\n"), {
+      x: boxX, y: boxY, w: boxW, h: boxH,
+      fontFace: THEME.fontBody,
+      fontSize,
+      color: "0F172A",
+      valign: "top",
+      breakLine: true,
+      bullet: isBullet ? { indent: 24 } : undefined
+    });
+
+    addPageIndicator(s, idx+1, pages.length, THEME);
+  });
+}
+
+function addRiskManagementSlides(pptx, bg, title, riskEntries, THEME){
+  // 1) matrice 5x5 con conteggi
+  const s1 = pptx.addSlide();
+  addBg(s1, bg);
+  if(!bg) s1.background = { color:"FFFFFF" };
+  addAcsTitle(s1, title + " — Matrice", THEME);
+
+  const boxX = THEME.marginX;
+  const boxY = 1.75;
+  const boxW = SLIDE_W - 2*THEME.marginX;
+  const boxH = 5.2;
+
+  // griglia: Severity (X) 1..5, Probability (Y) 5..1 (alto in alto)
+  const cellW = boxW / 6;        // 1 col per etichette + 5 celle
+  const cellH = boxH / 6;        // 1 riga per etichette + 5 celle
+  const x0 = boxX;
+  const y0 = boxY;
+
+  // header riga/colonna
+  s1.addText("Probability", { x:x0, y:y0-0.35, w:boxW, h:0.3, fontFace:THEME.fontBody, fontSize:12, color:"334155" });
+  s1.addText("Severity",    { x:x0 + cellW, y:y0-0.35, w:boxW-cellW, h:0.3, fontFace:THEME.fontBody, fontSize:12, color:"334155" });
+
+  // conteggi
+  const counts = Array.from({length:6}, ()=>Array.from({length:6}, ()=>0));
+  (riskEntries||[]).forEach(r=>{
+    const p = clamp(parseInt(r.prob||3,10),1,5);
+    const v = clamp(parseInt(r.sev||3,10),1,5);
+    counts[p][v] += 1;
+  });
+
+  // disegno tabella (etichette + celle)
+  for(let ry=0; ry<=5; ry++){
+    for(let cx=0; cx<=5; cx++){
+      const X = x0 + cx*cellW;
+      const Y = y0 + ry*cellH;
+
+      // header cells
+      if(ry===0 && cx===0){
+        s1.addShape(pptx.ShapeType.rect, { x:X, y:Y, w:cellW, h:cellH, fill:{color:"F1F5F9"}, line:{color:"E2E8F0"} });
+        continue;
+      }
+
+      if(ry===0 && cx>0){
+        s1.addShape(pptx.ShapeType.rect, { x:X, y:Y, w:cellW, h:cellH, fill:{color:"F1F5F9"}, line:{color:"E2E8F0"} });
+        s1.addText(String(cx), { x:X, y:Y+0.08, w:cellW, h:cellH, align:"center", valign:"middle", fontFace:THEME.fontBody, fontSize:12, color:"0F172A", bold:true });
+        continue;
+      }
+
+      if(cx===0 && ry>0){
+        // Probability label: 5..1 dall'alto verso il basso
+        const pLabel = String(6-ry);
+        s1.addShape(pptx.ShapeType.rect, { x:X, y:Y, w:cellW, h:cellH, fill:{color:"F1F5F9"}, line:{color:"E2E8F0"} });
+        s1.addText(pLabel, { x:X, y:Y+0.08, w:cellW, h:cellH, align:"center", valign:"middle", fontFace:THEME.fontBody, fontSize:12, color:"0F172A", bold:true });
+        continue;
+      }
+
+      const prob = 6-ry;     // 5..1
+      const sev  = cx;       // 1..5
+      const n = counts[prob][sev];
+
+      // colore basato su score (prob*sev)
+      const score = prob*sev;
+      let fill = "EEF2FF";         // low
+      if(score>=16) fill="FECACA"; // critical
+      else if(score>=9) fill="FEF9C3"; // high
+      else if(score>=4) fill="E0F2FE"; // medium
+
+      s1.addShape(pptx.ShapeType.rect, { x:X, y:Y, w:cellW, h:cellH, fill:{color:fill}, line:{color:"E2E8F0"} });
+
+      if(n>0){
+        s1.addText(String(n), {
+          x:X, y:Y, w:cellW, h:cellH,
+          align:"center", valign:"middle",
+          fontFace:THEME.fontBody, fontSize:18, color:"0F172A", bold:true
+        });
+      }
+    }
+  }
+
+  s1.addText("Nota: conteggi per cella (Probabilità × Severità).", {
+    x: THEME.marginX, y: SLIDE_H - 0.45, w: SLIDE_W - 2*THEME.marginX, h: 0.4,
+    fontFace: THEME.fontBody, fontSize: 10, color: "5A6283"
+  });
+
+  // 2) tabella dettagli (paginata se lunga)
+  const rows = (riskEntries||[]).map((r, i)=>({
+    idx:i+1,
+    desc: String(r.desc||""),
+    owner: String(r.owner||""),
+    prob: clamp(parseInt(r.prob||3,10),1,5),
+    sev:  clamp(parseInt(r.sev||3,10),1,5),
+    lvl:  riskLevel(clamp(parseInt(r.prob||3,10),1,5), clamp(parseInt(r.sev||3,10),1,5)),
+    mit:  String(r.mit||"")
+  }));
+
+  const PAGE_SIZE = 10; // righe per slide
+  const pages = [];
+  for(let i=0;i<rows.length;i+=PAGE_SIZE) pages.push(rows.slice(i,i+PAGE_SIZE));
+
+  pages.forEach((chunk, pi)=>{
+    const s = pptx.addSlide();
+    addBg(s, bg);
+    if(!bg) s.background = { color:"FFFFFF" };
+    addAcsTitle(s, title + ` — Dettaglio (${pi+1}/${pages.length})`, THEME);
+
+    const tableX = THEME.marginX;
+    const tableY = 1.75;
+    const tableW = SLIDE_W - 2*THEME.marginX;
+    const tableH = 5.6;
+
+    const head = [["#", "Risk", "Owner", "P", "S", "Level", "Mitigation"]];
+    const body = (chunk.length?chunk:[{idx:"—",desc:"—",owner:"",prob:"",sev:"",lvl:"",mit:""}]).map(r=>[
+      String(r.idx),
+      r.desc,
+      r.owner,
+      String(r.prob),
+      String(r.sev),
+      r.lvl,
+      r.mit
+    ]);
+
+    s.addTable(head.concat(body), {
+      x: tableX, y: tableY, w: tableW, h: tableH,
+      fontFace: THEME.fontBody,
+      fontSize: 10,
+      color: "0F172A",
+      border: { type: "solid", color: "E2E8F0", pt: 1 },
+      fill: "FFFFFF",
+      valign: "top",
+      colW: [0.35, tableW*0.33, tableW*0.14, 0.35, 0.35, tableW*0.12, tableW*0.31],
+      rowH: 0.28
+    });
+  });
+}
+
+
+  /* ========== Export PPTX ========== */
+  exportPptxBtn.onclick = async () => {
+    try{
+      render();
+      await ensureDefaultBackgrounds();
+
+      const BG_COVER  = readLS(LS_BG_COVER).data;
+      const BG_AGENDA = readLS(LS_BG_AGENDA).data;
+      const BG_MIDDLE = readLS(LS_BG_MIDDLE).data;
+      const BG_END    = readLS(LS_BG_END).data;
+      const owner = (ownerRole && ownerRole.value ? ownerRole.value.trim() : "");
+
+  const cliName = (clientName ? clientName.value.trim() : "") ;
+
+      const title = (titleInp.value||"Progetto").trim();
+
+      const pptx = new PptxGenJS();
+      pptx.layout = "LAYOUT_WIDE";
+      pptx.author = "Gantt Creator";
+
+      const THEME = {
+        fontHead: "Manrope Light",
+        fontBody: "Manrope Light",
+        titleSize: 34,
+        h1Size: 20,
+        bodySize: 18,
+        smallSize: 12,
+        marginX: 0.75,
+        marginY: 0.55
+      };
+
+       const ACCENT = "FCCB93";
+
+      // Slide 1: Copertina
+      {
+        const s = pptx.addSlide();
+        addBg(s, BG_COVER);
+        if(!BG_COVER) s.background = { color:"FFFFFF" };
+
+        const kDate = kickoffDate && kickoffDate.value ? kickoffDate.value : "";
+        const kDateIt = kDate ? toDate(kDate).toLocaleDateString(undefined,{day:"2-digit",month:"2-digit",year:"numeric", timeZone:'UTC'}) : "";
+
+        s.addText(title, {
+            x: THEME.marginX, y: 2.5, w: 12.0, h: 1.0,
+            fontFace: "Manrope Light",
+            fontSize: 30,
+            bold: false,
+            color: "FFFFFF"
+        });
+
+            // Kickoff + data: Manrope Light 14, #FCCB93
+            s.addText(
+                "Kickoff di progetto" + (kDateIt ? " — " + kDateIt : "") + " - " + cliName,
+                {
+                x: THEME.marginX, y: 5.35, w: 12.0, h: 0.35,
+                fontFace: "Manrope Light",
+                fontSize: 14,
+                bold: false,
+                color: ACCENT
+                }
+            );
+
+            // PM: Manrope Light 14, #FCCB93
+            if(owner){
+                s.addText(owner, {
+                x: THEME.marginX, y: 5.75, w: 12.0, h: 0.35,
+                fontFace: "Manrope Light",
+                fontSize: 14,
+                bold: false,
+                color: ACCENT
+                });
+            }
+
+        s.addText("MyCompany Timeline " + APP_VERSION + (kDateIt ? " — " + kDateIt : ""), {
+          x: THEME.marginX, y: 7.15, w: 12.0, h: 0.3,
+          fontFace: THEME.fontBody, fontSize: 10, color: ACCENT
+        });
+      }
+
+      const AGENDA_BODY_X = THEME.marginX + 0.94;
+
+      // Slide 2: Agenda
+      addPagedTextSlides(
+  pptx, BG_AGENDA, "Agenda",
+  linesFromTextarea(agenda.value),
+  THEME,
+  { bullets:true, x: AGENDA_BODY_X, y:1.75, w:12.0, h:5.2, fontSize:THEME.bodySize }
+);
+
+
+// Slide 3: Contesto e obiettivi (include anche "Scopo" per non perdere contenuto)
+{
+  const s = pptx.addSlide();
+  addBg(s, BG_MIDDLE);
+  if(!BG_MIDDLE) s.background = { color:"FFFFFF" };
+
+  addAcsTitle(s, "Contesto e obiettivi", THEME);
+
+  // Box scopo (testo libero)
+  const scopo = String(purpose.value||"").trim();
+  const boxX = THEME.marginX;
+  const boxY = 1.65;
+  const boxW = SLIDE_W - 2*THEME.marginX;
+  const boxH = 1.15;
+
+  s.addShape(pptx.ShapeType.roundRect, {
+    x: boxX, y: boxY, w: boxW, h: boxH,
+    fill: { color: "F1F5F9" },
+    line: { color: "E2E8F0" },
+    radius: 10
+  });
+
+  s.addText("Scopo del progetto", {
+    x: boxX + 0.25, y: boxY + 0.12, w: boxW - 0.5, h: 0.28,
+    fontFace: THEME.fontBody, fontSize: 12, color: "334155", bold: true
+  });
+
+  s.addText(scopo || "—", {
+    x: boxX + 0.25, y: boxY + 0.42, w: boxW - 0.5, h: 0.70,
+    fontFace: THEME.fontBody, fontSize: 12, color: "0F172A",
+    valign: "top", breakLine: true
+  });
+
+  // Bullets contesto
+  const ctxLines = linesFromTextarea(context ? context.value : "");
+  s.addText((ctxLines.length?ctxLines:["—"]).join("\n"), {
+    x: THEME.marginX,
+    y: 2.95,
+    w: SLIDE_W - 2*THEME.marginX,
+    h: SLIDE_H - 3.35,
+    fontFace: THEME.fontBody,
+    fontSize: THEME.bodySize,
+    color: "0F172A",
+    valign: "top",
+    breakLine: true,
+    bullet: { indent: 24 }
+  });
+}
+
+// Slide 4: Scope
+addPagedTextSlides(
+  pptx, BG_MIDDLE, "Scope",
+  linesFromTextarea(scope ? scope.value : ""),
+  THEME,
+  { bullets:true }
+);
+
+// Slide 5: Stakeholder, ruoli e governance (2 colonne + governance sotto)
+{
+  const s = pptx.addSlide();
+  addBg(s, BG_MIDDLE);
+  if(!BG_MIDDLE) s.background = { color:"FFFFFF" };
+
+  addAcsTitle(s, "Stakeholder, ruoli e governance", THEME);
+
+  // --- Layout colonne (ROBUSTO: non esce mai dalla slide) ---
+  const contentW = SLIDE_W - 2*THEME.marginX;
+  const colGap = 0.35;                 // gap tra colonne
+  const boxW  = (contentW - colGap)/2; // larghezza colonna
+  const leftX = THEME.marginX;
+  const rightX = leftX + boxW + colGap;
+
+  const topY = 1.75;
+
+  // Titoli colonna alta
+  s.addText("MyCompany", {
+    x:leftX, y:topY, w:boxW, h:0.35,
+    fontFace:THEME.fontHead, fontSize:16, bold:true, color:"0F172A"
+  });
+
+  s.addText(cliName, {
+    x:rightX, y:topY, w:boxW, h:0.35,
+    fontFace:THEME.fontHead, fontSize:16, bold:true, color:"0F172A"
+  });
+
+  const acsLines = linesFromTextarea(stakeAcs.value);
+  const cliLines = linesFromTextarea(stakeClient.value);
+
+  // colonne più compatte per lasciare spazio sotto
+  const colH = 2.95;
+  s.addText((acsLines.length?acsLines:["—"]).join("\n"), {
+    x:leftX, y:topY+0.45, w:boxW, h:colH,
+    fontFace:THEME.fontBody, fontSize:THEME.bodySize, color:"0F172A",
+    valign:"top", breakLine:true, bullet:{indent:24}
+  });
+  s.addText((cliLines.length?cliLines:["—"]).join("\n"), {
+    x:rightX, y:topY+0.45, w:boxW, h:colH,
+    fontFace:THEME.fontBody, fontSize:THEME.bodySize, color:"0F172A",
+    valign:"top", breakLine:true, bullet:{indent:24}
+  });
+
+  // ----------------------------
+  // Governance + Note D.Lgs sotto (2 box speculari)
+  // ----------------------------
+  const govLines  = linesFromTextarea(governance ? governance.value : "");
+  const dlgsLines = linesFromTextarea(dlgsNotes ? dlgsNotes.value : "");
+
+  const areaY = 5.15;
+  const areaH = 2.05;
+  const LIFT_UP = 0.4; // ≈ 1 cm verso l'alto
+
+  // Titoli
+  s.addText("Governance", {
+    x: leftX,
+    y: areaY - LIFT_UP,
+    w: boxW,
+    h: 0.3,
+    fontFace: THEME.fontHead,
+    fontSize: 14,
+    bold: true,
+    color: "0F172A"
+  });
+
+  const dlgsTitle = `Note IMPORTANTI D.Lgs. 81/2008 - ${cliName}`;
+  const dlgsTitleFont = (dlgsTitle.length > 40 ? 10 : 12);
+
+  s.addText(dlgsTitle, {
+    x: rightX,
+    y: areaY - LIFT_UP,
+    w: boxW,
+    h: 0.32,
+    fontFace: THEME.fontHead,
+    fontSize: dlgsTitleFont,
+    bold: true,
+    color: "0F172A",
+    align: "left",
+    valign: "middle",
+    breakLine: false
+  });
+
+  // Box (identici)
+  const boxTopPad = 0.42;  // distanza titolo->box
+  const boxY = areaY + boxTopPad - LIFT_UP;
+  const boxH = areaH - boxTopPad;
+
+  // Governance box (sinistra)
+  s.addShape(pptx.ShapeType.roundRect, {
+    x: leftX,
+    y: boxY,
+    w: boxW,
+    h: boxH,
+    fill: { color: "F8FAFC" },
+    line: { color: "E2E8F0" },
+    radius: 10
+  });
+
+  // D.Lgs box (destra)
+  s.addShape(pptx.ShapeType.roundRect, {
+    x: rightX,
+    y: boxY,
+    w: boxW,
+    h: boxH,
+    fill: { color: "F8FAFC" },
+    line: { color: "E2E8F0" },
+    radius: 10
+  });
+
+  // Testi dentro box (padding coerente)
+  const padX = 0.18;
+  const padY = 0.12;
+
+  // Governance text (sinistra)
+  s.addText((govLines.length ? govLines : ["(da compilare)"]).join("\n"), {
+    x: leftX + padX,
+    y: boxY + padY,
+    w: boxW - 2*padX,
+    h: boxH - 2*padY,
+    fontFace: THEME.fontBody,
+    fontSize: 11,
+    color: "0F172A",
+    valign: "top",
+    breakLine: true,
+    bullet: { indent: 18 }
+  });
+
+  // D.Lgs text (destra)
+  s.addText((dlgsLines.length ? dlgsLines : ["(da compilare)"]).join("\n"), {
+    x: rightX + padX,
+    y: boxY + padY,
+    w: boxW - 2*padX,
+    h: boxH - 2*padY,
+    fontFace: THEME.fontBody,
+    fontSize: 11,
+    color: "0F172A",
+    valign: "top",
+    breakLine: true,
+    bullet: { indent: 18 }
+  });
+}
+
+// TIMELINE: per ogni timeline 2 slide
+// 1) Fasi del progetto, timeline e milestone (testuale)
+// 2) Timeline Chart (immagine del Gantt)
+{
+  const prevId0 = activeTlId;
+
+  for(const tl of timelines){
+    const suf = (tl.suffix || "").trim();
+    const globalLabelSide = (labelSideSel && labelSideSel.value) ? labelSideSel.value : "right";
+
+// Slide testuale (NUOVA: tabellare stile immagine)
+addWrittenGanttSlides(
+  pptx,
+  BG_MIDDLE,
+  "Fasi del progetto, timeline e milestone" + (suf ? " - " + suf : ""),
+  tl,
+  THEME
+);
+
+
+
+    // Slide chart (immagine)
+    activeTlId = tl.id;
+    bindTL();
+    render();
+
+    const s = pptx.addSlide();
+    addBg(s, BG_MIDDLE);
+    if(!BG_MIDDLE) s.background = { color:"FFFFFF" };
+
+    addAcsTitle(s, "Timeline Chart" + (suf ? " - " + suf : ""), THEME);
+
+    const boxX = THEME.marginX;
+    const boxY = 1.95;
+    const boxW = SLIDE_W - 2*THEME.marginX;
+    const boxH = SLIDE_H - boxY - 0.55;
+
+    const png = await svgToPngForPpt(svg, lastSVGWidth, lastSVGHeight, boxW, boxH, 300);
+    if(!png) throw new Error("Impossibile convertire SVG in PNG per PPTX");
+
+    const svgRatio = lastSVGWidth / lastSVGHeight;
+    const boxRatio = boxW / boxH;
+
+    let w, h, x, y;
+    if(boxRatio > svgRatio){
+      h = boxH;
+      w = h * svgRatio;
+      x = boxX + (boxW - w)/2;
+      y = boxY;
+    } else {
+      w = boxW;
+      h = w / svgRatio;
+      x = boxX;
+      y = boxY + (boxH - h)/2;
+    }
+    s.addImage({ data: png, x, y, w, h });
+
+    s.addText(
+      "Nota: le tempistiche sono indicative (elapsed) e soggette a validazione; il Gantt definitivo sarà definito dopo l’analisi iniziale.",
+      {
+        x: THEME.marginX,
+        y: SLIDE_H - 0.4,
+        w: SLIDE_W - 2 * THEME.marginX,
+        h: 0.4,
+        fontFace: THEME.fontBody,
+        fontSize: 10,
+        color: "5A6283",
+        align: "center",
+        valign: "middle"
+      }
+    );
+  }
+
+  activeTlId = prevId0;
+  bindTL();
+  render();
+}
+
+// Slide: Deliverable
+addPagedTextSlides(
+  pptx, BG_MIDDLE, "Deliverable",
+  linesFromTextarea(deliverables ? deliverables.value : ""),
+  THEME,
+  { bullets:true }
+);
+
+// Slide: Prerequisiti (numerati come prima)
+{
+  const items = linesFromTextarea(prereq.value);
+  const numbered = (items.length?items:["—"]).map((t,i)=>`${i+1}. ${t}`);
+addPagedTextSlides(
+  pptx, BG_MIDDLE, "Prerequisiti",
+  numbered,
+  THEME,
+  { bullets:false }
+);
+}
+
+// Slide: BOM Licenze
+addPagedTextSlides(
+  pptx, BG_MIDDLE,
+  (licTitle.value||"BOM Licenze").trim() || "BOM Licenze",
+  linesFromTextarea(licText.value),
+  THEME,
+  { bullets:true }
+);
+
+
+// Slide: BOM Materiali
+addPagedTextSlides(
+  pptx, BG_MIDDLE,
+  (matTitle.value||"BOM Materiali").trim() || "BOM Materiali",
+  linesFromTextarea(matText.value),
+  THEME,
+  { bullets:true }
+);
+
+
+// Slide: Piano di comunicazione e collaboration (2 colonne)
+{
+  const s = pptx.addSlide();
+  addBg(s, BG_MIDDLE);
+  if(!BG_MIDDLE) s.background = { color:"FFFFFF" };
+
+  addAcsTitle(s, "Piano di comunicazione e collaboration", THEME);
+
+  const leftX = THEME.marginX;
+  const rightX = 7.9;
+  const topY = 1.85;
+  const boxW = 5.9;
+  const boxH = 5.0;
+
+  s.addText("Piano di comunicazione", { x:leftX, y:topY, w:boxW, h:0.35, fontFace:THEME.fontHead, fontSize:16, bold:true, color:"0F172A" });
+  s.addText("Collaboration", { x:rightX, y:topY, w:boxW, h:0.35, fontFace:THEME.fontHead, fontSize:16, bold:true, color:"0F172A" });
+
+  const commLines = linesFromTextarea(comms.value);
+  const colLines  = linesFromTextarea(collab.value);
+
+  s.addText((commLines.length?commLines:["—"]).join("\n"), {
+    x:leftX, y:topY+0.45, w:boxW, h:boxH,
+    fontFace:THEME.fontBody, fontSize:THEME.bodySize, color:"0F172A",
+    valign:"top", breakLine:true, bullet:{indent:24}
+  });
+
+  s.addText((colLines.length?colLines:["—"]).join("\n"), {
+    x:rightX, y:topY+0.45, w:boxW, h:boxH,
+    fontFace:THEME.fontBody, fontSize:THEME.bodySize, color:"0F172A",
+    valign:"top", breakLine:true, bullet:{indent:24}
+  });
+}
+
+// Slide: Rischi e dipendenze
+addPagedTextSlides(pptx, BG_MIDDLE, "Rischi e dipendenze", linesFromTextarea(risks ? risks.value : ""), THEME, { bullets:true });
+
+// Slide: Risk management (structured)
+if(riskEntries.length){
+  addRiskManagementSlides(pptx, BG_MIDDLE, "Risk management", riskEntries, THEME);
+}
+
+
+// Slide: Out of scope
+addPagedTextSlides(pptx, BG_MIDDLE, "Out of scope", linesFromTextarea(outScope ? outScope.value : ""), THEME, { bullets:true });
+
+// Slide: Prossimi passi e Q&A
+addPagedTextSlides(pptx, BG_MIDDLE, "Prossimi passi e Q&A", linesFromTextarea(nextSteps ? nextSteps.value : ""), THEME, { bullets:true });
+
+
+      // SAL slides
+      if(salEntries.length){
+        if(!salBaseline) ensureSalBaseline();
+
+        salEntries.forEach(entry=>{
+          const dateLabel = (entry.dateLabel||"").trim();
+
+// Avanzamento: una slide per timeline (KPI + tabella)
+for(const tl of timelines){
+  const s = pptx.addSlide();
+  addBg(s, BG_MIDDLE);
+  if(!BG_MIDDLE) s.background = { color:"FFFFFF" };
+
+  const dateLabel = (entry.dateLabel||"").trim();
+  const suf = (tl.suffix || "").trim();
+  addAcsTitle(s, `SAL - Avanzamento — ${dateLabel}` + (suf ? ` — ${suf}` : ""), THEME);
+
+  const data = computeSalProgressTable(entry, tl);
+
+  // KPI box
+  const boxX = THEME.marginX;
+  const boxY = 1.65;
+  const boxW = SLIDE_W - 2*THEME.marginX;
+  const boxH = 0.95;
+
+  s.addShape(pptx.ShapeType.roundRect, {
+    x: boxX, y: boxY, w: boxW, h: boxH,
+    fill: { color: "F1F5F9" },
+    line: { color: "E2E8F0" },
+    radius: 10
+  });
+
+  s.addText(`Avanzamento medio: ${fmtPct(data.kpi.avgCur)}`, {
+    x: boxX + 0.25, y: boxY + 0.18, w: boxW*0.55, h: 0.35,
+    fontFace: THEME.fontBody, fontSize: 20, color: "0F172A", bold: true
+  });
+
+  const rightX = boxX + boxW*0.58;
+  s.addText(`Δ vs baseline: ${fmtDelta(data.kpi.dBase, true)}`, {
+    x: rightX, y: boxY + 0.18, w: boxW*0.40, h: 0.25,
+    fontFace: THEME.fontBody, fontSize: 12, color: deltaColor(data.kpi.dBase, true)
+  });
+
+  s.addText(`Δ vs SAL prec: ${fmtDelta(data.kpi.dPrev, data.hasPrev)}`, {
+    x: rightX, y: boxY + 0.48, w: boxW*0.40, h: 0.25,
+    fontFace: THEME.fontBody, fontSize: 12, color: deltaColor(data.kpi.dPrev, data.hasPrev)
+  });
+
+  // Tabella (addTable)
+  const tableX = THEME.marginX;
+  const tableY = 2.75;
+  const tableW = SLIDE_W - 2*THEME.marginX;
+  const tableH = 4.55;
+
+  const head = [["Attività", "Avanz.", "Δ vs prec", "Δ vs base"]];
+
+  const bodyRows = (data.rows.length ? data.rows : [{name:"—", cur:0, dPrev:null, dBase:0}]).map(r => ([
+    r.name,
+    fmtPct(r.cur),
+    fmtDelta(r.dPrev, data.hasPrev),
+    fmtDelta(r.dBase, true)
+  ]));
+
+  const all = head.concat(bodyRows);
+
+  // Se hai molte righe, riduci font per stare comodo
+  const fontSize = data.rows.length > 10 ? 10 : 12;
+
+  s.addTable(all, {
+    x: tableX, y: tableY, w: tableW, h: tableH,
+    fontFace: THEME.fontBody,
+    fontSize,
+    color: "0F172A",
+    border: { type: "solid", color: "E2E8F0", pt: 1 },
+    fill: "FFFFFF",
+    valign: "top",
+    colW: [tableW*0.60, tableW*0.12, tableW*0.14, tableW*0.14],
+    rowH: 0.28
+  });
+
+  // (opzionale) Nota piccola
+  s.addText("Legenda: Δ vs prec = differenza rispetto al SAL precedente; Δ vs base = differenza rispetto alla baseline iniziale.", {
+    x: THEME.marginX,
+    y: SLIDE_H - 0.45,
+    w: SLIDE_W - 2*THEME.marginX,
+    h: 0.35,
+    fontFace: THEME.fontBody,
+    fontSize: 10,
+    color: "5A6283"
+  });
+}
+
+
+          // Issue
+            addPagedTextSlides(
+  pptx, BG_MIDDLE, `SAL - Issue — ${dateLabel}`,
+  linesFromTextarea(entry.issuesText),
+  THEME,
+  { bullets:true }
+);
+          // Note
+addPagedTextSlides(
+  pptx, BG_MIDDLE, `SAL - Note aggiuntive — ${dateLabel}`,
+  linesFromTextarea(entry.notesText),
+  THEME,
+  { bullets:true }
+);
+        });
+      }
+
+      // Slide finale
+      {
+        const s = pptx.addSlide();
+        addBg(s, BG_END);
+        if(!BG_END) s.background = { color:"FFFFFF" };
+
+        s.addText("Grazie", {
+          x: THEME.marginX, y: 3.0, w: 12.0, h: 1.0,
+          fontFace: "Manrope Light", fontSize: 30, bold: true, color: "FFFFFF"
+        });
+        s.addText(title, {
+          x: THEME.marginX, y: 4.0, w: 12.0, h: 0.6,
+          fontFace: THEME.fontBody, fontSize: 18, color: ACCENT
+        });
+      }
+
+      await pptx.writeFile({ fileName: safeName(title || "progetto") + ".pptx" });
+    } catch(err){
+      console.error(err);
+      alert("Errore export PPTX: " + (err && err.message ? err.message : String(err)));
+    }
+  };
+
+  /* ========== Render ========== */
+  $("#renderBtn").onclick=render;
+
+  function render(){
+    outTitle.textContent=titleInp.value||"Gantt";
+    if(outOwner) outOwner.textContent = (ownerRole.value || "Nome Cognome — Ruolo");
+
+    const dates=[];
+    tasks.forEach(t=>{dates.push(t.start,t.end)});
+    milestones.forEach(m=>dates.push(m.date));
+    markers.forEach(m=>dates.push(m.date));
+    if(startBound.value) dates.push(toDate(startBound.value));
+    if(endBound.value)   dates.push(toDate(endBound.value));
+    if(!dates.length){ svg.innerHTML=""; return; }
+
+    let minD=new Date(Math.min(...dates.map(d=>d.getTime())));
+    let maxD=new Date(Math.max(...dates.map(d=>d.getTime())));
+    minD=shift(minD,-2); maxD=shift(maxD,2);
+
+    while(svg.firstChild) svg.removeChild(svg.firstChild);
+    ensureSvgFx();
+
+    const gBACK = svg.appendChild(el("g"));
+    const gGRID = svg.appendChild(el("g"));
+    const gTASK = svg.appendChild(el("g"));
+    const gTOP  = svg.appendChild(el("g"));
+
+    const rowH=parseInt(rowHRange.value,10); rowHVal.textContent=rowH;
+    const ribbon=150, leftMargin=16;
+    const leftPad = leftMargin + ribbon + 8;
+    const rightPad=90, topPad=120, bottomPad=92;
+
+    const PHASE_GAP = 10;
+    const daysTotal=diffDays(minD,maxD)+1;
+    const timeWidth=Math.max(1100, daysTotal*26);
+
+    const byPhase=new Map();
+    phases.forEach(p=>byPhase.set(p.id,[]));
+    tasks.forEach(t=>{
+      if(!byPhase.has(t.phaseId)) byPhase.set(t.phaseId,[]);
+      byPhase.get(t.phaseId).push(t);
+    });
+
+    let totalRows=0;
+    phases.forEach(p=>{
+      const n=(byPhase.get(p.id)||[]).length;
+      totalRows += Math.max(1,n);
+    });
+    if(!msInPhase.checked) totalRows += 1;
+
+    const gapTotal = Math.max(0, (phases.length-1) * PHASE_GAP) + (!msInPhase.checked ? PHASE_GAP : 0);
+    const width = leftPad + timeWidth + rightPad;
+    const height = topPad + bottomPad + totalRows*rowH + gapTotal + 40;
+
+    lastSVGWidth=width; lastSVGHeight=height;
+    svg.setAttribute("width",width);
+    svg.setAttribute("height",height);
+    svg.setAttribute("viewBox",`0 0 ${width} ${height}`);
+    text(gGRID, width - rightPad, 26, "Timeline " + APP_VERSION, "#5a6283", "end", 12, true);
+
+    const xScale=d=> leftPad + ((d - minD)/(1000*60*60*24))*(timeWidth/daysTotal);
+
+    rect(gGRID,leftPad,10,timeWidth,24,"#eef2ff");
+    rect(gGRID,leftPad,34,timeWidth,24,"#eef2ff");
+    rect(gGRID,leftPad,58,timeWidth,24,"#e9edff");
+
+    let cur=new Date(Date.UTC(minD.getUTCFullYear(), minD.getUTCMonth(), 1));
+    while(cur<=maxD){
+      const next=new Date(Date.UTC(cur.getUTCFullYear(), cur.getUTCMonth()+1, 1));
+      const x1=xScale(cur<minD?minD:cur), x2=xScale(next>maxD?maxD:next);
+      text(gGRID,(x1+x2)/2,28,itMonth(cur),"#1a224b","middle",12,true);
+      cur=next;
+    }
+
+    for(let d=0; d<=daysTotal; d++){
+      const date=shift(minD,d), mon=date.getUTCDay()===1;
+      if(mon||d===0||d===daysTotal){
+        const x=xScale(date);
+        line(gGRID,x, topPad-10, x, height-bottomPad, mon? "#cbd5ff":"#e2e7ff", mon? 1.2 : 1);
+        text(gGRID,x+4,50,itShort(date),"#1a224b","start",12,false);
+      }
+    }
+
+    if(shadeWeekend.checked){
+      for(let d=0; d<daysTotal; d++){
+        const date=shift(minD,d);
+        if(isWeekend(date)){
+          const x=xScale(date), w=xScale(shift(date,1))-x;
+          rect(gBACK,x, topPad-8, w, height-(topPad-8)-bottomPad, "#f7f9ff");
+        }
+      }
+    }
+
+    let yCursor = topPad;
+
+    phases.forEach((ph, phIdx)=>{
+      const items=byPhase.get(ph.id)||[];
+      const phRows=Math.max(1,items.length);
+      const y0=yCursor;
+
+      if(phaseBg.checked){
+        gradient(`phGrad_${ph.id}`, lighten(ph.color,.12), darken(ph.color,.08));
+        rrect(gBACK, 16, y0, 150, phRows*rowH, 10, `url(#phGrad_${ph.id})`, darken(ph.color,.22), .18);
+        wrapPhaseLabel(gBACK, 16, y0, 150, phRows*rowH, ph.name, "#0f172a");
+      }
+
+      items.forEach((t, i)=>{
+        const y = y0 + i*rowH + Math.round(rowH*0.22);
+        const h = Math.round(rowH*0.56);
+        const x1=xScale(t.start), x2=xScale(t.end), w=Math.max(2,x2-x1);
+
+        gradient(`g${ph.id}`,lighten(ph.color,.10), darken(ph.color,.06));
+        const bar=rrect(gTASK,x1,y,w,h,6, `url(#g${ph.id})`, darken(ph.color,.2));
+        bar.setAttribute("filter","url(#fx-softShadow)");
+        bar.dataset.id=t.id; bar.dataset.drag="task";
+
+        const gh=Math.max(8,Math.round(h*0.6));
+        const gxL=rrect(gTASK,x1-3,(y+h/2)-gh/2,6,gh,3,"#fff",darken(ph.color,.25));
+        gxL.setAttribute('data-resize','left'); gxL.setAttribute('data-id',t.id);
+        const gxR=rrect(gTASK,x2-3,(y+h/2)-gh/2,6,gh,3,"#fff",darken(ph.color,.25));
+        gxR.setAttribute('data-resize','right'); gxR.setAttribute('data-id',t.id);
+
+        const p=clamp(t.prog||0,0,100)/100;
+        if(progressStyle.value==="dual"){
+          const pw=Math.max(0,Math.min(w,w*p));
+          rrect(gTASK,x1,y,pw,h,6, darken(ph.color,.22), "transparent");
+        } else {
+          const xp=x1+w*p;
+          line(gTASK,xp,y-3,xp,y+h+3, darken(ph.color,.22),3);
+        }
+
+        const label=labelFor(t);
+        const fitsInside = w >= 60;
+        const globalSide = labelSideSel.value || "right";
+        let place = t.labelSide || globalSide;
+        if(place==="auto") place = fitsInside ? "inside" : "right";
+
+        if(place==="inside"){
+          wrapText(gTASK,label, x1+6, y+4, Math.max(48,w-12), 3, "#0f172a", true);
+        } else if(place==="left"){
+          const lx = Math.max(leftPad-6, x1-8);
+          text(gTASK,lx, y+h-2, label, "#0f172a","end",12,false);
+        } else if(place==="right"){
+          const lx = Math.min(leftPad+timeWidth-6, x2+8);
+          text(gTASK,lx, y+h-2, label, "#0f172a","start",12,false);
+        }
+      });
+
+      if(msInPhase.checked){
+        const mlist=milestones.filter(m=>m.phaseId===ph.id);
+        const centerY = y0 + Math.round(phRows*rowH*0.5);
+        const laneStep = 14;
+
+        const layout = layoutNonOverlap(
+          mlist,
+          m => xScale(m.date),
+          m => measure(msText(m)) + 22,
+          6
+        );
+        const offsetBase = -((layout.lanesCount-1)*laneStep)/2;
+
+        layout.placed.forEach(({item, lane})=>{
+          const x=xScale(item.date);
+          const y=centerY + offsetBase + lane*laneStep + (item.yOffset||0);
+          const s=Math.max(7,Math.round(rowH*0.22));
+          const poly=diamond(gTOP,x,y,s,"#f59e0b","#8b5b00");
+          poly.setAttribute("filter","url(#fx-softShadow)");
+          poly.dataset.id=item.id; poly.dataset.drag="ms";
+          text(gTOP,Math.max(leftPad-10,x-8), y+4, msText(item), "#0f172a","end",12,false);
+        });
+      }
+
+      yCursor = y0 + phRows*rowH + (phIdx < phases.length-1 ? PHASE_GAP : 0);
+    });
+
+    if(!msInPhase.checked){
+      const baseY = yCursor + Math.round(rowH*0.55);
+      const laneStep = 14;
+
+      const layout = layoutNonOverlap(
+        milestones,
+        m => xScale(m.date),
+        m => measure(msText(m)) + 22,
+        6
+      );
+      const offsetBase = -((layout.lanesCount-1)*laneStep)/2;
+
+      layout.placed.forEach(({item, lane})=>{
+        const y=baseY + offsetBase + lane*laneStep + (item.yOffset||0);
+        const x=xScale(item.date), s=Math.max(7,Math.round(rowH*0.22));
+        const poly=diamond(gTOP,x,y,s,"#f59e0b","#8b5b00");
+        poly.setAttribute("filter","url(#fx-softShadow)");
+        poly.dataset.id=item.id; poly.dataset.drag="ms";
+        text(gTOP,Math.max(leftPad-10,x-8), y+4, msText(item), "#0f172a","end",12,false);
+      });
+
+      yCursor += rowH + PHASE_GAP;
+    }
+
+    markers.forEach(mk=>{
+      const x=xScale(mk.date);
+      line(gTOP,x, topPad-10, x, height-bottomPad, "#1d4ed8",1.8);
+      const w=measure(mk.label)+14, y=74, rx=10;
+      const cx=Math.min(leftPad+timeWidth-w/2-2, Math.max(leftPad+w/2+2, x));
+      roundRect(gTOP,cx-w/2, y-12, w, 22, rx, "#e7eefc", "#c7d4fb");
+      text(gTOP,cx, y, mk.label, "#0f172a","middle",12,false);
+    });
+
+    const today=toDate(fmt(new Date()));
+    if(showToday.checked && today>=minD && today<=maxD){
+      const x=xScale(today);
+      line(gTOP,x, topPad-10, x, height-bottomPad, "#10b981",1.8,"6 6");
+    }
+
+    function ensureSvgFx(){
+      let defs=svg.querySelector("defs");
+      if(!defs) defs=svg.insertBefore(el("defs"), svg.firstChild);
+
+      if(!svg.querySelector("#fx-softShadow")){
+        const f = el("filter",{id:"fx-softShadow", x:"-20%", y:"-30%", width:"140%", height:"180%"});
+        const blur = el("feGaussianBlur", {in:"SourceAlpha", stdDeviation:"2", result:"b"});
+        const off  = el("feOffset", {in:"b", dx:"0", dy:"2", result:"o"});
+        const col  = el("feColorMatrix", {
+          in:"o", type:"matrix",
+          values:"0 0 0 0 0.05  0 0 0 0 0.08  0 0 0 0 0.18  0 0 0 0.22 0",
+          result:"c"
+        });
+        const merge = el("feMerge");
+        merge.appendChild(el("feMergeNode",{in:"c"}));
+        merge.appendChild(el("feMergeNode",{in:"SourceGraphic"}));
+        f.appendChild(blur); f.appendChild(off); f.appendChild(col); f.appendChild(merge);
+        defs.appendChild(f);
+      }
+
+      if(!svg.querySelector("#fx-crispText")){
+        const f = el("filter",{id:"fx-crispText", x:"-5%", y:"-20%", width:"110%", height:"140%"});
+        const blur = el("feGaussianBlur", {in:"SourceAlpha", stdDeviation:"1.2", result:"tb"});
+        const col  = el("feColorMatrix", {
+          in:"tb", type:"matrix",
+          values:"0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.28 0",
+          result:"tc"
+        });
+        const merge = el("feMerge");
+        merge.appendChild(el("feMergeNode",{in:"tc"}));
+        merge.appendChild(el("feMergeNode",{in:"SourceGraphic"}));
+        f.appendChild(blur); f.appendChild(col); f.appendChild(merge);
+        defs.appendChild(f);
+      }
+    }
+
+    function gradient(id,hi,lo){
+      let defs=svg.querySelector("defs"); if(!defs) defs=svg.insertBefore(el("defs"), svg.firstChild);
+      let g=svg.querySelector(`#${id}`);
+      if(!g){
+        g=el("linearGradient",{id}); g.setAttribute("x1","0"); g.setAttribute("x2","0"); g.setAttribute("y1","0"); g.setAttribute("y2","1");
+        const s1=el("stop"); s1.setAttribute("offset","0%"); s1.setAttribute("stop-color",hi);
+        const s2=el("stop"); s2.setAttribute("offset","100%"); s2.setAttribute("stop-color",lo);
+        g.appendChild(s1); g.appendChild(s2); defs.appendChild(g);
+      }
+    }
+    function rect(g,x,y,w,h,fill){const r=el("rect"); r.setAttribute("x",x); r.setAttribute("y",y); r.setAttribute("width",w); r.setAttribute("height",h); r.setAttribute("fill",fill); g.appendChild(r); return r; }
+    function rrect(g,x,y,w,h,r,fill,stroke,strokeAlpha){
+      const rr=el("rect"); rr.setAttribute("x",x); rr.setAttribute("y",y); rr.setAttribute("width",w); rr.setAttribute("height",h); rr.setAttribute("rx",r); rr.setAttribute("ry",r); rr.setAttribute("fill",fill); g.appendChild(rr);
+      if(stroke && stroke!=="transparent"){
+        const ol=el("rect"); ol.setAttribute("x",x); ol.setAttribute("y",y); ol.setAttribute("width",w); ol.setAttribute("height",h); ol.setAttribute("rx",r); ol.setAttribute("ry",r); ol.setAttribute("fill","none"); ol.setAttribute("stroke",stroke); ol.setAttribute("stroke-opacity", String(strokeAlpha ?? .35)); g.appendChild(ol);
+      }
+      return rr;
+    }
+    function roundRect(g,x,y,w,h,r,fill,stroke){
+      const rr=el("rect"); rr.setAttribute("x",x); rr.setAttribute("y",y); rr.setAttribute("width",w); rr.setAttribute("height",h); rr.setAttribute("rx",r); rr.setAttribute("ry",r); rr.setAttribute("fill",fill); if(stroke) rr.setAttribute("stroke",stroke); g.appendChild(rr); return rr;
+    }
+    function line(g,x1,y1,x2,y2,stroke,w,dash){
+      const l=el("line");
+      Object.entries({x1,y1,x2,y2,stroke}).forEach(([k,v])=>l.setAttribute(k,v));
+      l.setAttribute("stroke-width",w||1);
+      if(dash) l.setAttribute("stroke-dasharray",dash);
+      g.appendChild(l);
+      return l;
+    }
+    function text(g,x,y,txt,fill,anchor,size,bold){
+      const t=el("text");
+      Object.entries({x,y,fill}).forEach(([k,v])=>t.setAttribute(k,v));
+      t.setAttribute("text-anchor",anchor||"start");
+      t.setAttribute("font-size",size||12);
+      t.setAttribute("font-weight",bold?"700":"400");
+      t.setAttribute("paint-order","stroke");
+      t.setAttribute("stroke","rgba(255,255,255,.55)");
+      t.setAttribute("stroke-width","3");
+      t.setAttribute("stroke-linejoin","round");
+      t.setAttribute("filter","url(#fx-crispText)");
+      t.textContent=txt;
+      g.appendChild(t);
+      return t;
+    }
+    function diamond(g,cx,cy,s,fill,stroke){
+      const p=`${cx},${cy-s} ${cx+s},${cy} ${cx},${cy+s} ${cx-s},${cy}`;
+      const poly=el("polygon");
+      poly.setAttribute("points",p);
+      poly.setAttribute("fill",fill);
+      poly.setAttribute("stroke",stroke);
+      g.appendChild(poly);
+      return poly;
+    }
+    function wrapPhaseLabel(g, x, y, w, h, textStr, color){
+      const lines=[]; const words=textStr.split(" "); let lineCur="";
+      const meter=document.createElement("canvas").getContext("2d");
+      meter.font='12px Inter, system-ui';
+      for(const wv of words){
+        const tryL=lineCur?lineCur+" "+wv:wv;
+        if(meter.measureText(tryL).width<=w-12){ lineCur=tryL; }
+        else { if(lineCur) lines.push(lineCur); lineCur=wv; }
+      }
+      if(lineCur) lines.push(lineCur);
+      const lineH=14;
+      let yy=y+Math.max(lineH+4, (h-(lines.length*lineH))/2 + lineH);
+      lines.forEach(l=>{ text(g, x+w/2, yy, l, color, "middle", 12, true); yy+=lineH; });
+    }
+
+    function wrapText(g, str, x, y, maxW, maxLines, color, bold){
+      const words=String(str).split(/\s+/);
+      const lines=[]; let cur="";
+      for(const w of words){
+        const tryL = cur ? cur+" "+w : w;
+        if(measure(tryL)<=maxW){ cur=tryL; }
+        else { if(cur) lines.push(cur); cur=w; if(lines.length>=maxLines-1) break; }
+      }
+      if(cur && lines.length<maxLines) lines.push(cur);
+      if(lines.length===maxLines){
+        while(measure(lines[maxLines-1]+"…")>maxW && lines[maxLines-1].length>1){
+          lines[maxLines-1]=lines[maxLines-1].slice(0,-1);
+        }
+        lines[maxLines-1]+="…";
+      }
+      const lh=14; let yy=y+12;
+      lines.forEach((l,i)=>{ text(g, x, yy + i*lh, l, color, "start", 12, bold); });
+    }
+  }
+
+  const SVG_NS="http://www.w3.org/2000/svg";
+  function el(t,a){const e=document.createElementNS(SVG_NS,t); for(const k in (a||{})) e.setAttribute(k,a[k]); return e;}
+  const escapeHtml=s=>String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
+  const escapeAttr=s=>escapeHtml(s).replace(/"/g,"&quot;");
+
+  /* ==== Seed timeline defaults / clone ==== */
+  function seedTimelineDefaults(tl){
+    const p1={id:uid("ph"),name:"FASE 1 — KICKOFF E ANALISI",color:"#f59e0b"};
+    const p2={id:uid("ph"),name:"FASE 2 — SETUP EDR SU POOL PILOTA",color:"#22c55e"};
+    const p3={id:uid("ph"),name:"FASE 3 — SETUP SIEM",color:"#3b82f6"};
+    const p4={id:uid("ph"),name:"FASE 4 — GO LIVE",color:"#64748b"};
+    tl.phases.push(p1,p2,p3,p4);
+
+    const base=new Date(); base.setDate(base.getDate()-5);
+    const add=(ph,t,ds,de)=>tl.tasks.push({
+      id:uid("t"),
+      phaseId:ph.id, name:t,
+      start:shift(base,ds), end:shift(base,de),
+      prog:0, labelSide:""
+    });
+
+    add(p1,"Kickoff interno e con cliente",2,4);
+    add(p1,"Definizione attività e tempi (Gantt)",3,5);
+    add(p2,"Creazione tenant",4,8);
+    add(p2,"Analisi eccezioni antivirus corrente",4,11);
+    add(p2,"Installazione agent su pool pilota",8,14);
+    add(p2,"Definizione falsi positivi",12,17);
+    add(p3,"Creazione connettori fonti log",6,11);
+    add(p3,"Ingestion log firewall verso SIEM",9,15);
+
+    tl.milestones.push({id:uid("m"),name:"Go Live",date:shift(base,22),phaseId:p4.id,yOffset:0});
+    tl.milestones.push({id:uid("m"),name:"Partenza servizio",date:shift(base,23),phaseId:p4.id,yOffset:0});
+    tl.markers.push({id:uid("k"),label:"22/10 Kick off",date:shift(base,2)});
+    tl.markers.push({id:uid("k"),label:"31/10 SAL",date:shift(base,11)});
+  }
+
+  function deepCloneTimeline(src){
+    const tl = makeEmptyTimeline();
+    tl.suffix = (src.suffix || "") + " (copy)";
+    const phMap = new Map();
+
+    (src.phases||[]).forEach(p=>{
+      const np = { id:uid("ph"), name:p.name, color:p.color };
+      phMap.set(p.id, np.id);
+      tl.phases.push(np);
+    });
+
+    (src.tasks||[]).forEach(t=>{
+      tl.tasks.push({
+        id: uid("t"),
+        phaseId: phMap.get(t.phaseId) || tl.phases[0]?.id || "",
+        name: t.name,
+        start: new Date(t.start),
+        end: new Date(t.end),
+        prog: clamp(parseInt(t.prog||0,10),0,100),
+        labelSide: t.labelSide || ""
+      });
+    });
+
+    (src.milestones||[]).forEach(m=>{
+      tl.milestones.push({
+        id: uid("m"),
+        name: m.name,
+        date: new Date(m.date),
+        phaseId: phMap.get(m.phaseId) || "",
+        yOffset: parseInt(m.yOffset||0,10)||0
+      });
+    });
+
+    (src.markers||[]).forEach(k=>{
+      tl.markers.push({ id:uid("k"), label:k.label, date:new Date(k.date) });
+    });
+
+    return tl;
+  }
+
+  /* ==== Seed demo (reset) ==== */
+  function seedDemo(){
+    // reset a 1 timeline seeded
+    timelines.length = 0;
+    const tl = makeEmptyTimeline();
+    seedTimelineDefaults(tl);
+    timelines.push(tl);
+    activeTlId = tl.id;
+    bindTL();
+    rebuildTimelineSelect();
+
+    salBaseline = null;
+    salEntries.length = 0;
+    salSelectedId = "";
+    redrawSalTable();
+    salIssues.value=""; salNotes.value="";
+
+    riskEntries.length = 0;
+rebuildRisksTable();
+clearRiskForm();
+
+licTitle.value = "BOM Licenze";
+matTitle.value = "BOM Materiali";
+
+
+    syncAgendaWithSalSmart();
+
+    purpose.value = "Implementare EDR e SIEM in ambiente pilota, validare integrazioni e definire il modello operativo per la messa in produzione.";
+    stakeAcs.value = "PM MyCompany — Coordinamento\nSecEng MyCompany — Implementazione EDR\nSIEM Eng MyCompany — Ingestion & Use Case";
+    stakeClient.value = "IT Manager — Sponsor\nSOC Lead — Requisiti & validazione\nNetwork Admin — Connettività";
+
+    licText.value = "Licenza EDR (endpoint pilota)\nLicenza SIEM ingestion (GB/day)\nAccesso console/vendor (se richiesto)";
+    matText.value = "VM collector (specifiche minime)\nAccesso firewall per regole\nCredenziali admin temporanee\nAccount servizio per connettori";
+
+    prereq.value = "Accesso VPN attivo e testato\nAccount admin temporaneo per installazioni\nWhitelist firewall per connettori SIEM\nDisponibilità finestre di change";
+    comms.value = "SAL settimanale (30 min)\nCanale Teams dedicato\nEscalation entro 4h per blocchi critici";
+    collab.value = "SharePoint progetto: /Progetti/EDR-SIEM\nCartella log: \\\\server\\share\\logs\nDocumentazione: wiki interno";
+
+    if(context) context.value = "Contesto attuale e criticità\nObiettivi misurabili (KPI)\nAssunzioni e vincoli";
+if(scope) scope.value = "In scope: ambiente pilota\nIn scope: integrazioni log principali\nOut: rollout completo (vedi Out of scope)";
+if(governance) governance.value = "Steering committee mensile\nPMO settimanale\nChange approval: CAB cliente";
+if(deliverables) deliverables.value = "Documento HLD/LLD\nRunbook operativo\nUse case SIEM (v1)\nReport pilot & raccomandazioni";
+if(dlgsNotes) dlgsNotes.value = "Obbligo di coordinamento HSE\nAccesso aree e DPI a cura del Cliente\nPermessi e DUVRI se applicabile";
+
+if(risks) risks.value = "Dipendenza: disponibilità accessi\nRischio: falsi positivi\nRischio: ritardi change window";
+if(outScope) outScope.value = "Rollout su tutta la flotta\nUse case avanzati (fase successiva)";
+if(nextSteps) nextSteps.value = "Conferma accessi\nAllineamento scope\nAvvio attività Fase 1\nQ&A";
+
+
+    labelSideSel.value="right";
+
+    titleInp.value='Setup EDR + SIEM — Piano pilota';
+    kickoffDate.value = fmt(new Date());
+    ownerRole.value = "Mario Rossi — PM";
+    clientName.value = "Cliente S.p.A.";
+    if(outOwner) outOwner.textContent = ownerRole.value;
+
+    redrawPhaseTable(); refreshPhaseSelects();
+    rebuildTasksTable();
+    msBody.innerHTML=""; milestones.forEach(addMsRow);
+    mkBody.innerHTML=""; markers.forEach(addMkRow);
+
+    render();
+  }
+  resetBtn.onclick=seedDemo;
+
+  /* ==== DRAG, RESIZE task/milestone ==== */
+  let drag=null;
+
+  svg.addEventListener("mousedown",ev=>{
+    const handle = ev.target.closest('[data-resize]');
+    if(handle){
+      const id = handle.getAttribute('data-id');
+      const side = handle.getAttribute('data-resize');
+      drag={type: side==='left'? 'resize-left':'resize-right', id, x0:ev.clientX, moved:false};
+      ev.preventDefault();
+      return;
+    }
+    const el=ev.target.closest("[data-drag]");
+    if(!el) return;
+    ev.preventDefault();
+    const type=el.dataset.drag, id=el.dataset.id;
+    drag={type,id,x0:ev.clientX,y0:ev.clientY, moved:false};
+    el.classList.add('dragging');
+  });
+
+  svg.addEventListener("mousemove",ev=>{
+    if(!drag) return;
+    ev.preventDefault();
+    const dx=ev.clientX - drag.x0;
+    const dy=ev.clientY - (drag.y0||0);
+    if(Math.abs(dx)<2 && Math.abs(dy)<2) return;
+    drag.moved=true;
+
+    const [minD,maxD]=getDateBounds();
+    const daysTotal=diffDays(minD,maxD)+1;
+    const timeWidth=Math.max(1100, daysTotal*26);
+    const pxPerDay=timeWidth/daysTotal;
+    const deltaDays=Math.round(dx/pxPerDay);
+
+    if(drag.type==="task"){
+      if(deltaDays!==0){
+        const t=tasks.find(x=>x.id===drag.id); if(!t) return;
+        t.start=shift(t.start,deltaDays);
+        t.end=shift(t.end,deltaDays);
+        drag.x0=ev.clientX;
+        render();
+        rebuildTasksTable();
+      }
+    } else if(drag.type==="ms"){
+      let changed=false;
+      if(deltaDays!==0){
+        const m=milestones.find(x=>x.id===drag.id); if(!m) return;
+        m.date=shift(m.date,deltaDays); drag.x0=ev.clientX; changed=true;
+      }
+      const laneStep=14;
+      const steps = Math.round(dy / laneStep);
+      if(steps!==0){
+        const m=milestones.find(x=>x.id===drag.id); if(!m) return;
+        m.yOffset = (m.yOffset||0) + steps*laneStep;
+        drag.y0 = ev.clientY; changed=true;
+      }
+      if(changed){ render(); }
+    } else if(drag.type==="resize-left" || drag.type==="resize-right"){
+      const t=tasks.find(x=>x.id===drag.id); if(!t) return;
+      if(deltaDays!==0){
+        if(drag.type==="resize-left"){
+          const newStart = shift(t.start,deltaDays);
+          if(newStart <= t.end){ t.start=newStart; drag.x0=ev.clientX; }
+        } else {
+          const newEnd = shift(t.end,deltaDays);
+          if(newEnd >= t.start){ t.end=newEnd; drag.x0=ev.clientX; }
+        }
+        render();
+        rebuildTasksTable();
+      }
+    }
+  });
+
+  svg.addEventListener("mouseup",ev=>{
+    const el=ev.target.closest('[data-drag]');
+    if(el) el.classList.remove('dragging');
+    drag=null;
+  });
+
+  function getDateBounds(){
+    const dates=[];
+    tasks.forEach(t=>{dates.push(t.start,t.end)});
+    milestones.forEach(m=>dates.push(m.date));
+    markers.forEach(m=>dates.push(m.date));
+    if(startBound.value) dates.push(toDate(startBound.value));
+    if(endBound.value) dates.push(toDate(endBound.value));
+    let minD=new Date(Math.min(...dates.map(d=>d.getTime())));
+    let maxD=new Date(Math.max(...dates.map(d=>d.getTime())));
+    minD=shift(minD,-2); maxD=shift(maxD,2);
+    return [minD,maxD];
+  }
+
+  /* ========================= Fix z-index picker ========================= */
+  (function fixPickerStacking(){
+    let last = null;
+
+    document.addEventListener("focusin", (e)=>{
+      const t = e.target;
+      if(!t) return;
+
+      if(t.matches("select, input[type='file'], input[type='date'], input[type='text'], textarea")){
+        const p = t.closest(".panel");
+        if(p){
+          if(last && last !== p) last.classList.remove("focusRaise");
+          p.classList.add("focusRaise");
+          last = p;
+        }
+      }
+    });
+
+    document.addEventListener("focusout", (e)=>{
+      setTimeout(()=>{
+        if(last && !last.contains(document.activeElement)){
+          last.classList.remove("focusRaise");
+          last = null;
+        }
+      }, 150);
+    });
+  })();
+
+  // Avvio
+  (async ()=>{
+    await ensureDefaultBackgrounds();
+    refreshBgUI();
+
+    // init: 1 timeline seeded
+    if(!timelines.length){
+      const tl = makeEmptyTimeline();
+      seedTimelineDefaults(tl);
+      timelines.push(tl);
+      activeTlId = tl.id;
+    }
+    bindTL();
+    rebuildTimelineSelect();
+
+    seedDemo();
+    redrawSalTable();
+  })();
+
+})();
+</script>
+</body>
+</html>
